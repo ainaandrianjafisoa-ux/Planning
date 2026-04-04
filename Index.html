@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Fluid Architecture - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@300;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#4d4635",
+                        "on-tertiary": "#082b72",
+                        "surface": "#111318",
+                        "on-surface-variant": "#d0c5af",
+                        "on-secondary-container": "#c8b37d",
+                        "primary-fixed": "#ffe088",
+                        "surface-container-low": "#1a1b21",
+                        "on-tertiary-fixed-variant": "#27438a",
+                        "secondary-container": "#544519",
+                        "inverse-primary": "#735c00",
+                        "on-primary": "#3c2f00",
+                        "on-tertiary-container": "#254188",
+                        "secondary-fixed": "#f7e1a6",
+                        "on-primary-fixed-variant": "#574500",
+                        "surface-bright": "#37393f",
+                        "surface-tint": "#e9c349",
+                        "on-error": "#690005",
+                        "error": "#ffb4ab",
+                        "primary-container": "#d4af37",
+                        "tertiary-fixed-dim": "#b4c5ff",
+                        "on-primary-fixed": "#241a00",
+                        "on-error-container": "#ffdad6",
+                        "error-container": "#93000a",
+                        "primary": "#f2ca50",
+                        "on-secondary": "#3c2f05",
+                        "on-secondary-fixed": "#241a00",
+                        "on-background": "#e2e2e9",
+                        "surface-container-lowest": "#0c0e13",
+                        "on-surface": "#e2e2e9",
+                        "inverse-surface": "#e2e2e9",
+                        "on-secondary-fixed-variant": "#544519",
+                        "primary-fixed-dim": "#e9c349",
+                        "on-primary-container": "#554300",
+                        "inverse-on-surface": "#2e3036",
+                        "tertiary": "#bfcdff",
+                        "surface-dim": "#111318",
+                        "surface-container-highest": "#33353a",
+                        "secondary-fixed-dim": "#dac58d",
+                        "secondary": "#dac58d",
+                        "on-tertiary-fixed": "#00174b",
+                        "tertiary-fixed": "#dbe1ff",
+                        "surface-variant": "#33353a",
+                        "outline": "#99907c",
+                        "background": "#111318",
+                        "tertiary-container": "#97b0ff",
+                        "surface-container-high": "#282a2f",
+                        "surface-container": "#1e1f25"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(51, 53, 58, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .glowing-glow {
+            box-shadow: 0 0 20px rgba(242, 202, 80, 0.3);
+        }
+        .tonal-shift {
+            background: linear-gradient(180deg, #111318 0%, #1a1b21 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary/30 min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#111318]/60 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
+<div class="flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/20 hover:scale-105 transition-transform duration-300">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="close-up portrait of a professional woman with a minimalist aesthetic in a high-end office environment with warm lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2NzozezwEa9RhKrgPhxaM0LyjUbr3hIvYSiLzY_Ou4OmkoD3oVPp__wmSjHXrIwCP8Y70JI4XLalzs8g53OOoqjfT4INSLCFWpjUSB1LaPi8dHZZa2t_eP_giw8xx9IJTLlzDMQOs_lTs-H78Lnzbg3gjHoUza85_-zTPhbnjVwGVDvBGAFk_v5nVordO3GIPxz2Lpp2JN5C9oaqKazkBm5VyWi5qs67Q94YdiR-jfWlU3cwVf8YKbnXbG5mwZD-PudzC7uEhXZv1"/>
+</div>
+<span class="font-['Space_Grotesk'] font-bold text-[#d4af37] tracking-tighter text-xl">Fluid Architecture</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined text-[#d0c5af] cursor-pointer hover:scale-105 transition-transform duration-300">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full animate-pulse"></span>
+</div>
+<span class="material-symbols-outlined text-[#d0c5af] cursor-pointer hover:scale-105 transition-transform duration-300">settings</span>
+</div>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-7xl mx-auto space-y-10 animate-in fade-in zoom-in duration-700">
+<!-- Hero: Balance Snapshot -->
+<section class="mt-8 space-y-6">
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline text-on-surface-variant tracking-wide uppercase text-xs mb-1">Time Balance Overview</h2>
+<div class="flex items-baseline gap-2">
+<span class="font-headline text-6xl font-bold tracking-tighter text-primary">164.5</span>
+<span class="font-headline text-2xl text-on-surface-variant font-light">HRS</span>
+</div>
+</div>
+<div class="text-right pb-1">
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-widest mb-1">Next Accrual</p>
+<p class="font-headline text-xl text-primary-fixed">Oct 15</p>
+</div>
+</div>
+<!-- Bento Grid Highlights -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Current Shift Card -->
+<div class="md:col-span-2 glass-card rounded-xl p-8 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-6">
+<span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-tertiary-container/10 border border-tertiary/20 text-tertiary text-[10px] font-bold uppercase tracking-widest">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span> Active Shift
+                        </span>
+</div>
+<div class="space-y-4">
+<h3 class="font-headline text-2xl font-medium">Core Logic Architecture</h3>
+<div class="flex items-center gap-6">
+<div>
+<p class="text-xs text-on-surface-variant uppercase tracking-tighter mb-1">Started At</p>
+<p class="font-headline text-lg">08:30 AM</p>
+</div>
+<div class="h-8 w-px bg-outline-variant/30"></div>
+<div>
+<p class="text-xs text-on-surface-variant uppercase tracking-tighter mb-1">Elapsed</p>
+<p class="font-headline text-lg text-primary">05:42:12</p>
+</div>
+</div>
+</div>
+<div class="mt-8 flex gap-4">
+<button class="px-8 py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold rounded-full text-sm hover:scale-105 active:scale-95 transition-all cubic-bezier(0.2,0.8,0.2,1) glowing-glow">
+                            Clock Out
+                        </button>
+<button class="px-8 py-3 bg-surface-variant/40 backdrop-blur text-on-surface font-semibold rounded-full text-sm hover:scale-105 active:scale-95 transition-all">
+                            Take Break
+                        </button>
+</div>
+</div>
+<!-- Alerts & Actions -->
+<div class="glass-card rounded-xl p-6 flex flex-col justify-between">
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="font-headline text-sm font-bold uppercase tracking-widest text-[#d4af37]">Alerts</h3>
+<span class="material-symbols-outlined text-primary text-sm">bolt</span>
+</div>
+<div class="space-y-3">
+<div class="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low">
+<span class="material-symbols-outlined text-error text-lg">priority_high</span>
+<div>
+<p class="text-xs font-semibold">Approval Needed</p>
+<p class="text-[10px] text-on-surface-variant">Timecard for Week 42 is pending.</p>
+</div>
+</div>
+<div class="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low">
+<span class="material-symbols-outlined text-tertiary text-lg">info</span>
+<div>
+<p class="text-xs font-semibold">Policy Update</p>
+<p class="text-[10px] text-on-surface-variant">New Q4 travel guidelines active.</p>
+</div>
+</div>
+</div>
+</div>
+<button class="mt-4 w-full py-2 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant hover:text-primary transition-colors">
+                        View All Notifications
+                    </button>
+</div>
+</div>
+</section>
+<!-- Quick Actions & Secondary Stats -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="bg-surface-container-low rounded-xl p-6 flex flex-col items-center justify-center gap-3 group cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-primary text-3xl transition-transform group-hover:scale-110">calendar_add_on</span>
+<span class="font-headline text-xs font-bold uppercase tracking-widest">Request Leave</span>
+</div>
+<div class="bg-surface-container-low rounded-xl p-6 flex flex-col items-center justify-center gap-3 group cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-primary text-3xl transition-transform group-hover:scale-110">history</span>
+<span class="font-headline text-xs font-bold uppercase tracking-widest">Shift Logs</span>
+</div>
+<div class="bg-surface-container-low rounded-xl p-6 flex flex-col items-center justify-center gap-3 group cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-primary text-3xl transition-transform group-hover:scale-110">receipt_long</span>
+<span class="font-headline text-xs font-bold uppercase tracking-widest">Expenses</span>
+</div>
+<div class="bg-surface-container-low rounded-xl p-6 flex flex-col items-center justify-center gap-3 group cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-primary text-3xl transition-transform group-hover:scale-110">monitoring</span>
+<span class="font-headline text-xs font-bold uppercase tracking-widest">Reports</span>
+</div>
+</section>
+<!-- Script Ecosystem Visualization (Aesthetic element) -->
+<section class="glass-card rounded-xl overflow-hidden min-h-[300px] flex flex-col justify-end p-8 relative">
+<div class="absolute inset-0 z-0">
+<img alt="System Flow Aesthetic" class="w-full h-full object-cover opacity-30 grayscale" data-alt="abstract macro photography of architectural glass and structural steel with deep shadows and golden light leaks, high-end editorial feel" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3m76kAstvW-nHuT7qbrq6uR1ca-3WXYwqwv1IH-h4qcpo5pRjygVppw6Mm64hSxQXd6Rqa1N1fZRnnYjkB8Vuh7DKk8Cm4xdXnsgDvaiVybGruhkiw3A5HVkS6_mkM7YJnU4zQawh8qlbpA8jFy_reCW4_56WqN9S3tqeyvXnRtc-T8YDiY-Kckp3y42e0XO0Igz-0owSGeWNFdsY57iGypaEI-Qm9eGmp3DaIcYLKomjdYYHx5S-Dm3jBaMV2B_WsVGv0_8RHYYA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent"></div>
+</div>
+<div class="relative z-10 space-y-2">
+<h2 class="font-headline text-3xl font-bold tracking-tight text-on-surface">Data Integration Engine</h2>
+<p class="text-on-surface-variant max-w-md text-sm leading-relaxed">System healthy. 14 automation scripts active across 4 primary sheets. Last synchronization completed 4 minutes ago.</p>
+<div class="pt-4 flex items-center gap-4">
+<div class="flex -space-x-3">
+<div class="w-8 h-8 rounded-full border-2 border-surface overflow-hidden">
+<img alt="Script 1" data-alt="abstract tech pattern icon for a digital script" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGA_c45F43rFDSVgAOf84pknyW6EshPLky86fBPGygDVjnULK4D_n3Mt1ns81hXkJDyYAcgofOEjj3AQybczxQb4L28OCTbNRXiGVU4-2VxiTr_SIzLuYHxILzgGQbm25l2qt0kvYQ9bqziYfixzDxWR6YJmPz3roKnSN8d-z_SvHY7VzZkj864i-Yf3R_39IuXUhXHT-kSAVw_TOAnODjG2iYQxafVBnHexgRh-exuZpUbhmUal9QBWpI5Q2zOiLzJ-p9DiFq0DHe"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface overflow-hidden">
+<img alt="Script 2" data-alt="abstract tech pattern icon for a digital script" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFESKE5raFXSkGSZc2J-ARfHNBZ5F755iqwz_VroNi3W1S9BH_UgR4bBFnbl3CJMQov9yWJOynIqYxNxr2YXj5Btw46nkMea9FSyaP122nwnebCHdyVKQNMn2kPV6UvjtnQWinB-xSOGuAvFTWC7LqyOVOgpxEB_WwkNCkfNbfCkhF6F4yiRZApwEM1T67oYMkV865b-4o7Tz-__PMD0JZWoedaBXk7T04HBjc7JQ-lgOElGpEZDBD1skjl-pYKT-2mHylMyHUZcOk"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface overflow-hidden">
+<img alt="Script 3" data-alt="abstract tech pattern icon for a digital script" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXfED30vBIrwC9ZZniDLosoYtmuWSkCiuPPKrlYGtVA-sFH6fq1SHjMl5I1WhdOtRr64qVWxuYMV4yaOlWFUYHM7G0G8mEWHoCxNyQtPo4hu5NgqlncegIPiVY9Rz9mLEC5i0Vef3IHorpD4EqWD0YSGiAzRyG5eXRWp7OsY0F6Rm6gXUhQUac3YJonUcjutp4F9NcOVKbBU55fdu_yjHvK_BpT-HMBLE-hfB0b0TF9WIKDw5VWyhpinHQWuoh7faAtuuSx7N4GMXr"/>
+</div>
+</div>
+<span class="text-xs text-on-surface-variant font-medium">+11 active processes</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-[400px] rounded-full z-50 bg-[#33353a]/60 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+<div class="flex justify-around items-center py-3 px-4">
+<!-- Home (Active) -->
+<button class="flex flex-col items-center justify-center text-[#ffe088] after:content-[''] after:w-1 after:h-1 after:bg-[#ffe088] after:rounded-full after:mt-1 after:shadow-[0_0_8px_#f2ca50] transition-all active:scale-90 duration-300">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-tight">Home</span>
+</button>
+<!-- Planning -->
+<button class="flex flex-col items-center justify-center text-[#d0c5af] opacity-60 hover:opacity-100 transition-opacity active:scale-90 duration-300">
+<span class="material-symbols-outlined text-2xl">event_note</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-tight">Planning</span>
+</button>
+<!-- Leave -->
+<button class="flex flex-col items-center justify-center text-[#d0c5af] opacity-60 hover:opacity-100 transition-opacity active:scale-90 duration-300">
+<span class="material-symbols-outlined text-2xl">event_busy</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-tight">Leave</span>
+</button>
+<!-- Admin -->
+<button class="flex flex-col items-center justify-center text-[#d0c5af] opacity-60 hover:opacity-100 transition-opacity active:scale-90 duration-300">
+<span class="material-symbols-outlined text-2xl">admin_panel_settings</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-tight">Admin</span>
+</button>
+</div>
+</nav>
+<!-- Floating Action Button (Only on Mobile-ish viewports or as quick global) -->
+<button class="fixed bottom-24 right-8 w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all md:hidden">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</body></html>
