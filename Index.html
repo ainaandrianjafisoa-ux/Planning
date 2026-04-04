@@ -72,6 +72,15 @@ select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Cs
 .skeleton{background:linear-gradient(90deg,rgba(77,70,57,0.2) 25%,rgba(77,70,57,0.4) 50%,rgba(77,70,57,0.2) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes diamondPulse{0%{transform:translate(-50%,-50%) scale(1);opacity:1}50%{transform:translate(-50%,-50%) scale(1.08);opacity:0.7}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
+@keyframes diamondRotate{0%{transform:translate(-50%,-50%) rotate(45deg) scale(1)}25%{transform:translate(-50%,-50%) rotate(50deg) scale(1.05)}50%{transform:translate(-50%,-50%) rotate(45deg) scale(1.1)}75%{transform:translate(-50%,-50%) rotate(40deg) scale(1.05)}100%{transform:translate(-50%,-50%) rotate(45deg) scale(1)}}
+.diamond-bg.animating{animation:diamondPulse 2s ease-in-out infinite}
+.diamond-bg.animating .d{animation:diamondRotate 3s ease-in-out infinite}
+.diamond-bg.animating .d:nth-child(1){animation-delay:0s}
+.diamond-bg.animating .d:nth-child(2){animation-delay:0.15s}
+.diamond-bg.animating .d:nth-child(3){animation-delay:0.3s}
+.diamond-bg.animating .d:nth-child(4){animation-delay:0.45s}
+.diamond-bg.animating .d:nth-child(5){animation-delay:0.6s}
 .fade-in{animation:fadeIn .3s ease-out}
 .nav-item{display:flex;align-items:center;gap:12px;padding:12px 20px;border-radius:0;border-right:3px solid transparent;color:var(--outline);cursor:pointer;transition:all .2s;font-size:14px;font-weight:500}
 .nav-item:hover{color:var(--on-surface);background:rgba(242,202,80,0.04)}
@@ -230,6 +239,8 @@ select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Cs
       <div class="lg:col-span-2 glass p-6">
         <h3 class="font-headline font-semibold text-lg mb-5">Déposer une demande</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="admin-only" style="display:none"><label class="text-xs font-medium text-on-surface-var mb-1 block">Agent (admin)</label>
+            <select id="leaveAgentId" class="input-field"><option value="">— Pour moi-même —</option></select></div>
           <div><label class="text-xs font-medium text-on-surface-var mb-1 block">Type de congé</label>
             <select id="leaveType" class="input-field"><option value="">Chargement...</option></select></div>
           <div><label class="text-xs font-medium text-on-surface-var mb-1 block">Demi-journée</label>
@@ -289,10 +300,13 @@ select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Cs
   <div id="sub-conges-calendar" class="subtab-content" style="display:none">
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <div class="lg:col-span-3 glass p-6">
-        <div class="flex items-center justify-between mb-4">
-          <button onclick="calendarNav(-1)" class="btn-ghost !px-3 !py-1"><span class="material-symbols-outlined text-base">chevron_left</span></button>
-          <h3 class="font-headline font-semibold text-lg" id="calendarTitle">—</h3>
-          <button onclick="calendarNav(1)" class="btn-ghost !px-3 !py-1"><span class="material-symbols-outlined text-base">chevron_right</span></button>
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div class="flex items-center gap-3">
+            <button onclick="calendarNav(-1)" class="btn-ghost !px-3 !py-1"><span class="material-symbols-outlined text-base">chevron_left</span></button>
+            <h3 class="font-headline font-semibold text-lg" id="calendarTitle">—</h3>
+            <button onclick="calendarNav(1)" class="btn-ghost !px-3 !py-1"><span class="material-symbols-outlined text-base">chevron_right</span></button>
+          </div>
+          <select id="calendarTeamFilter" class="input-field !w-auto !py-2 text-xs admin-only" style="display:none" onchange="loadCalendar()"><option value="">Toutes équipes</option></select>
         </div>
         <div class="grid grid-cols-7 gap-1 text-center text-xs text-on-surface-var mb-2"><div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div></div>
         <div class="grid grid-cols-7 gap-1" id="calendarGrid"></div>
@@ -300,6 +314,7 @@ select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Cs
       <div class="glass p-5">
         <h4 class="font-headline font-semibold text-sm mb-3">Dépôt rapide</h4>
         <div class="space-y-3">
+          <div class="admin-only" style="display:none"><label class="text-xs text-on-surface-var mb-1 block">Agent</label><select id="quickLeaveAgent" class="input-field"><option value="">— Pour moi —</option></select></div>
           <div><label class="text-xs text-on-surface-var mb-1 block">Date</label><input id="quickLeaveDate" type="date" class="input-field"></div>
           <div><label class="text-xs text-on-surface-var mb-1 block">Type</label><select id="quickLeaveType" class="input-field"><option value="">—</option></select></div>
           <div><label class="text-xs text-on-surface-var mb-1 block">Demi-journée</label><select id="quickLeaveDemi" class="input-field"><option value="">Complète</option><option value="matin">Matin</option><option value="apres-midi">AM</option></select></div>
@@ -477,6 +492,16 @@ select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Cs
     </div>
   </div>
   <div id="sub-ptg-admin" class="subtab-content" style="display:none">
+    <!-- Presence overview -->
+    <div class="glass p-6 mb-6" id="ptgAdminPresenceSection">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <h3 class="font-headline font-semibold text-lg">Vue d'ensemble présence</h3>
+        <button onclick="loadAdminPresenceOverview()" class="btn-ghost text-xs"><span class="material-symbols-outlined text-base align-middle mr-1">refresh</span>Rafraîchir</button>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-5" id="ptgPresenceKpis"></div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" id="ptgPresenceCards"><div class="col-span-full text-center text-on-surface-var py-4">Chargement...</div></div>
+    </div>
+    <!-- Pointage table -->
     <div class="glass p-6">
       <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
         <h3 class="font-headline font-semibold text-lg">Pointage Admin</h3>
@@ -639,15 +664,15 @@ select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Cs
 <script>
 /* =========== STATE =========== */
 const S={token:null,user:null,config:null,balance:null,currentView:'conges',currentSubTabs:{},
-  calMonth:new Date().getMonth(),calYear:new Date().getFullYear(),
+  calMonth:new Date().getMonth(),calYear:new Date().getFullYear(),calEvents:{},
   myPlanWeek:mondayOf(new Date()),groupPlanWeek:mondayOf(new Date()),adminPlanWeek:mondayOf(new Date()),
   teams:[],users:[],models:[],plages:[],selectedAgents:new Set()};
 
 /* =========== UTILS =========== */
 function mondayOf(d){d=new Date(d);d.setDate(d.getDate()-((d.getDay()+6)%7));d.setHours(0,0,0,0);return d;}
-function isoDate(d){return d instanceof Date?d.toISOString().slice(0,10):String(d||'').slice(0,10);}
+function isoDate(d){if(d instanceof Date){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${dd}`;}return String(d||'').slice(0,10);}
 function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
-function fmtDate(s){if(!s||s==='—')return'—';const d=new Date(s);return isNaN(d)?'—':d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});}
+function fmtDate(s){if(!s||s==='—')return'—';const str=String(s).slice(0,10);const m=str.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(m){const d=new Date(+m[1],+m[2]-1,+m[3]);return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});}const d=new Date(s);return isNaN(d)?'—':d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});}
 function fmtTime(s){if(!s||s==='—')return'';return String(s).slice(0,5);}
 function fmtDateTime(s){if(!s)return'—';const d=new Date(s);return isNaN(d)?'—':d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
 function esc(s){const d=document.createElement('div');d.textContent=String(s??'');return d.innerHTML;}
@@ -673,7 +698,7 @@ function toggleTheme(){const h=document.documentElement,cur=h.getAttribute('data
 (function(){const t=sessionStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})();
 
 /* =========== AUTH =========== */
-async function doLogin(){const uid=el('loginId').value.trim(),pw=el('loginPw').value;if(!uid||!pw)return toast('Remplissez tous les champs','error');el('loginBtn').disabled=true;try{const r=await api('apiLogin',uid,pw);S.token=r.token;S.user=r.user;sessionStorage.setItem('token',S.token);await initApp();}catch(e){el('loginError').textContent=e.message;el('loginError').classList.remove('hidden');toast(e.message,'error');}finally{el('loginBtn').disabled=false;}}
+async function doLogin(){const uid=el('loginId').value.trim(),pw=el('loginPw').value;if(!uid||!pw)return toast('Remplissez tous les champs','error');el('loginBtn').disabled=true;el('loginBtn').textContent='Connexion...';el('diamondBg').classList.add('animating');try{const r=await api('apiLogin',uid,pw);S.token=r.token;S.user=r.user;sessionStorage.setItem('token',S.token);await initApp();}catch(e){el('loginError').textContent=e.message;el('loginError').classList.remove('hidden');toast(e.message,'error');}finally{el('loginBtn').disabled=false;el('loginBtn').textContent='Se connecter';el('diamondBg').classList.remove('animating');}}
 async function doLogout(){try{await api('apiLogout',S.token);}catch(e){}sessionStorage.removeItem('token');S.token=null;S.user=null;el('appShell').style.display='none';el('loginView').style.display='flex';}
 async function checkSession(){const t=sessionStorage.getItem('token');if(!t)return false;try{const r=await api('apiGetSession',t);S.token=t;S.user=r.user;return true;}catch(e){sessionStorage.removeItem('token');return false;}}
 
@@ -692,10 +717,11 @@ async function initApp(){
   if(el('adminPtgDateFrom'))el('adminPtgDateFrom').value=isoDate(fom);
   if(el('adminPtgDateTo'))el('adminPtgDateTo').value=isoDate(now);
   if(el('overtimeYear'))el('overtimeYear').value=now.getFullYear();
-  if(isAdmin){try{const ur=await api('apiAdminListUsers',S.token);S.users=ur.users||[];S.teams=[...new Set(S.users.map(u=>u.equipe).filter(Boolean))].sort();populateTeamFilters(S.teams);}catch(e){}}
+  if(isAdmin){try{const ur=await api('apiAdminListUsers',S.token);S.users=ur.users||[];S.teams=[...new Set(S.users.map(u=>u.equipe).filter(Boolean))].sort();populateTeamFilters(S.teams);populateAgentSelectors(S.users);}catch(e){}}
   navigateTo(S.currentView);startClock();
 }
-function populateTeamFilters(teams){['groupPlanTeamFilter','adminPlanTeamFilter','presenceTeamFilter','adminPtgTeam','overtimeTeam','validationTeamFilter','agentTemplateTeam'].forEach(id=>{const s=el(id);if(!s)return;const v=s.value;s.innerHTML='<option value="">Toutes équipes</option>'+teams.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');s.value=v;});}
+function populateTeamFilters(teams){['groupPlanTeamFilter','adminPlanTeamFilter','presenceTeamFilter','adminPtgTeam','overtimeTeam','validationTeamFilter','agentTemplateTeam','calendarTeamFilter'].forEach(id=>{const s=el(id);if(!s)return;const v=s.value;s.innerHTML='<option value="">Toutes équipes</option>'+teams.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');s.value=v;});}
+function populateAgentSelectors(users){const active=users.filter(u=>u.actif==='Oui'||u.actif===true).sort((a,b)=>(a.nomComplet||'').localeCompare(b.nomComplet||''));const opts=active.map(u=>`<option value="${esc(u.userId)}">${esc(u.nomComplet)} (${esc(u.userId)})</option>`).join('');['leaveAgentId','quickLeaveAgent'].forEach(id=>{const s=el(id);if(s)s.innerHTML='<option value="">— Pour moi-même —</option>'+opts;});}
 
 /* =========== NAV =========== */
 function navigateTo(view){S.currentView=view;document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===view));el('viewTitle').textContent={conges:'Congés',planning:'Planning',pointage:'Pointage',admin:'Administration'}[view]||view;document.querySelectorAll('.view-section').forEach(s=>s.style.display='none');const v=el('view'+view.charAt(0).toUpperCase()+view.slice(1));if(v){v.style.display='block';v.classList.add('fade-in');}loadViewData(view);}
@@ -717,8 +743,8 @@ async function loadBalance(){
     try{const l=await api('apiListLeaves',S.token,{scope:'mine',statut:'En attente'});el('balancePending').textContent=(l.items||[]).length;}catch(e){}
   }catch(e){toast('Erreur solde: '+e.message,'error');}
 }
-async function submitLeave(){const p={typeConge:el('leaveType').value,dateDebut:el('leaveStart').value,dateFin:el('leaveEnd').value||el('leaveStart').value,demiJournee:el('leaveDemiJournee').value,motif:el('leaveMotif').value};if(!p.typeConge||!p.dateDebut)return toast('Champs obligatoires','error');try{await api('apiCreateLeave',S.token,p);toast('Demande soumise','success');el('leaveMotif').value='';loadBalance();}catch(e){toast(e.message,'error');}}
-async function submitQuickLeave(){const p={date:el('quickLeaveDate').value,typeConge:el('quickLeaveType').value,demiJournee:el('quickLeaveDemi').value,motif:el('quickLeaveMotif').value};if(!p.date||!p.typeConge)return toast('Date et type requis','error');try{await api('apiCreateLeaveSingleDay',S.token,p);toast('Dépôt rapide effectué','success');loadCalendar();}catch(e){toast(e.message,'error');}}
+async function submitLeave(){const agentId=el('leaveAgentId')?.value;const p={typeConge:el('leaveType').value,dateDebut:el('leaveStart').value,dateFin:el('leaveEnd').value||el('leaveStart').value,demiJournee:el('leaveDemiJournee').value,motif:el('leaveMotif').value};if(!p.typeConge||!p.dateDebut)return toast('Champs obligatoires','error');try{if(agentId){p.userId=agentId;await api('apiAdminCreateLeaveForAgent',S.token,p);}else{await api('apiCreateLeave',S.token,p);}toast('Demande soumise','success');el('leaveMotif').value='';loadBalance();}catch(e){toast(e.message,'error');}}
+async function submitQuickLeave(){const agentId=el('quickLeaveAgent')?.value;const p={date:el('quickLeaveDate').value,typeConge:el('quickLeaveType').value,demiJournee:el('quickLeaveDemi').value,motif:el('quickLeaveMotif').value};if(!p.date||!p.typeConge)return toast('Date et type requis','error');try{if(agentId){p.userId=agentId;await api('apiAdminCreateLeaveSingleDayForAgent',S.token,p);}else{await api('apiCreateLeaveSingleDay',S.token,p);}toast('Dépôt rapide effectué','success');loadCalendar();}catch(e){toast(e.message,'error');}}
 
 async function loadMyLeaves(){
   const f={scope:'mine'};const st=el('myLeavesFilter')?.value;if(st)f.statut=st;
@@ -750,13 +776,15 @@ async function loadCalendar(){
   const firstDay=new Date(year,month,1),lastDay=new Date(year,month+1,0);
   let startPad=(firstDay.getDay()+6)%7;
   let events=[];
-  try{const r=await api('apiGetCalendarEvents',S.token,{annee:year,mois:month+1});events=r.events||[];}catch(e){}
+  const calF={annee:year,mois:month+1};const calTeam=el('calendarTeamFilter')?.value;if(calTeam)calF.equipe=calTeam;
+  try{const r=await api('apiGetCalendarEvents',S.token,calF);events=r.events||[];}catch(e){}
   const eMap={};events.forEach(ev=>{
     const sd=isoDate(ev.start||ev.dateDebut||ev.date);const ed=isoDate(ev.end||ev.dateFin||sd);
-    let cur=new Date(sd);const endD=new Date(ed);
+    const sp=sd.split('-'),ep=ed.split('-');
+    let cur=new Date(+sp[0],+sp[1]-1,+sp[2]);const endD=new Date(+ep[0],+ep[1]-1,+ep[2]);
     while(cur<=endD){const k=isoDate(cur);if(!eMap[k])eMap[k]=[];eMap[k].push(ev);cur=addDays(cur,1);}
   });
-  let html='';const today=isoDate(new Date());
+  S.calEvents=eMap;let html='';const today=isoDate(new Date());
   for(let i=0;i<startPad;i++)html+='<div class="min-h-[100px] rounded-lg p-2 opacity-30"></div>';
   for(let d=1;d<=lastDay.getDate();d++){
     const dt=isoDate(new Date(year,month,d)),isT=dt===today,evts=eMap[dt]||[];
@@ -779,7 +807,14 @@ async function loadCalendar(){
   el('calendarGrid').innerHTML=html;
 }
 function calendarNav(dir){S.calMonth+=dir;if(S.calMonth>11){S.calMonth=0;S.calYear++;}if(S.calMonth<0){S.calMonth=11;S.calYear--;}loadCalendar();}
-function onCalendarDayClick(dt){el('quickLeaveDate').value=dt;}
+function onCalendarDayClick(dt){
+  const evts=S.calEvents[dt]||[];
+  if(evts.length){
+    const rows=evts.map(e=>{const ep=e.extendedProps||{};return`<div class="glass-sm p-3 mb-2"><div class="flex items-center justify-between"><span class="font-medium text-sm">${esc(e.title||ep.typeConge||'Congé')}</span>${statusBadge(ep.statut||'')}</div><div class="text-xs text-on-surface-var mt-1">${esc(ep.nomAgent||'')} ${ep.equipe?'('+esc(ep.equipe)+')':''}</div><div class="text-xs text-on-surface-var">${fmtDate(ep.dateDebut||e.start)} → ${fmtDate(ep.dateFin||e.end)}</div>${ep.motif?'<div class="text-xs text-on-surface-var mt-1">'+esc(ep.motif)+'</div>':''}</div>`;}).join('');
+    openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Congés du ${fmtDate(dt)}</h3>${rows}<button onclick="closeModal();onCalendarNewLeave('${dt}')" class="btn-ghost w-full mt-3 text-sm">Nouvelle demande pour cette date</button>`);
+  } else { onCalendarNewLeave(dt); }
+}
+function onCalendarNewLeave(dt){el('quickLeaveDate').value=dt;closeModal();switchSubTab('conges','conges-calendar');toast('Date '+fmtDate(dt)+' sélectionnée','info');}
 
 async function loadBalanceCards(){
   try{const r=await api('apiGetMyBalance',S.token);S.balance=r;
@@ -978,7 +1013,19 @@ async function loadMyPointage(){const df=el('myPtgDateFrom')?.value,dt=el('myPtg
     if(!items.length){el('myPtgBody').innerHTML='<tr><td colspan="7" class="py-8 text-center text-on-surface-var">Aucun pointage</td></tr>';return;}
     el('myPtgBody').innerHTML=items.map(p=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4">${fmtDate(p.date)}</td><td class="py-3 pr-4">${fmtTime(p.heurePrevDebut)}-${fmtTime(p.heurePrevFin)}</td><td class="py-3 pr-4">${fmtTime(p.heureArrivee)||'—'}</td><td class="py-3 pr-4">${fmtTime(p.heureDepart)||'—'}</td><td class="py-3 pr-4">${p.dureeReelle||'—'}h</td><td class="py-3 pr-4 ${(p.retardMinutes||0)>0?'text-error':''}">${p.retardMinutes||0}min</td><td class="py-3 ${(p.heuresSup||0)>0?'text-primary':''}">${p.heuresSup||0}h</td></tr>`).join('');
   }catch(e){toast(e.message,'error');}}
-async function loadAdminPointage(){const equipe=el('adminPtgTeam')?.value,df=el('adminPtgDateFrom')?.value,dt=el('adminPtgDateTo')?.value;const f={};if(equipe)f.equipe=equipe;if(df)f.dateDebut=df;if(dt)f.dateFin=dt;
+async function loadAdminPresenceOverview(){
+  const equipe=el('adminPtgTeam')?.value;
+  try{const r=await api('apiGetPresenceOverview',S.token,{date:isoDate(new Date()),equipe});const agents=r.overview||[];const stats=r.stats||{};
+    el('ptgPresenceKpis').innerHTML=[{l:'Présents',v:stats.presents||0,c:'text-tertiary',i:'check_circle'},{l:'Absents',v:stats.absents||0,c:'text-error',i:'cancel'},{l:'En retard',v:agents.filter(a=>a.statut==='En retard').length,c:'text-primary',i:'timer_off'},{l:'En congé',v:stats.enConge||0,c:'text-secondary',i:'beach_access'},{l:'Congé att.',v:stats.congeEnAttente||0,c:'text-primary',i:'hourglass_empty'},{l:'Non planifié',v:stats.nonPlanifie||0,c:'text-on-surface-var',i:'event_busy'},{l:'OFF',v:stats.off||0,c:'text-outline',i:'bed'}].map(k=>`<div class="glass-sm p-3 kpi-card ${k.c} text-center"><span class="material-symbols-outlined text-lg">${k.i}</span><div class="text-xl font-headline font-bold">${k.v}</div><div class="text-[10px] text-on-surface-var">${k.l}</div></div>`).join('');
+    if(!agents.length){el('ptgPresenceCards').innerHTML='<div class="col-span-full text-center text-on-surface-var py-4">Aucun agent</div>';return;}
+    const sc={'Présent':'border-tertiary/30 bg-tertiary/5','En retard':'border-primary/30 bg-primary/5','Absent':'border-error/30 bg-error/5','Congé':'border-secondary/30 bg-secondary/5','Non planifié':'border-outline-var/30','OFF':'border-outline-var/30 bg-outline-var/5'};
+    const dc={'Présent':'bg-tertiary','En retard':'bg-primary','Absent':'bg-error','Congé':'bg-secondary','Non planifié':'bg-outline-var','OFF':'bg-outline-var'};
+    el('ptgPresenceCards').innerHTML=agents.map(a=>{const ptg=a.pointage||{};
+      return`<div class="glass-sm p-3 border ${sc[a.statut]||''}"><div class="flex items-center gap-2 mb-1"><span class="presence-dot ${dc[a.statut]||'bg-outline-var'}"></span><span class="font-medium text-xs">${esc(a.nomAgent||a.userId)}</span><span class="text-[10px] text-on-surface-var ml-auto">${esc(a.equipe||'')}</span></div>
+        <div class="text-[11px] text-on-surface-var">${a.shift?esc(a.shift):''} ${ptg.heureArrivee?'| Arr: '+fmtTime(ptg.heureArrivee):''} ${ptg.heureDepart?'| Dép: '+fmtTime(ptg.heureDepart):''} ${ptg.retardMinutes?`<span class="text-error">(${ptg.retardMinutes}min ret.)</span>`:''}</div></div>`;}).join('');
+  }catch(e){el('ptgPresenceKpis').innerHTML='';el('ptgPresenceCards').innerHTML=`<div class="col-span-full text-center text-error py-4">${esc(e.message)}</div>`;}
+}
+async function loadAdminPointage(){loadAdminPresenceOverview();const equipe=el('adminPtgTeam')?.value,df=el('adminPtgDateFrom')?.value,dt=el('adminPtgDateTo')?.value;const f={};if(equipe)f.equipe=equipe;if(df)f.dateDebut=df;if(dt)f.dateFin=dt;
   try{const r=await api('apiAdminListPointage',S.token,f);const items=r.items||[];
     if(!items.length){el('adminPtgBody').innerHTML='<tr><td colspan="9" class="py-8 text-center text-on-surface-var">Aucun pointage</td></tr>';return;}
     el('adminPtgBody').innerHTML=items.map(p=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4">${esc(p.nomAgent)}</td><td class="py-3 pr-4">${esc(p.equipe)}</td><td class="py-3 pr-4">${fmtDate(p.date)}</td><td class="py-3 pr-4">${fmtTime(p.heurePrevDebut)}-${fmtTime(p.heurePrevFin)}</td><td class="py-3 pr-4">${fmtTime(p.heureArrivee)||'—'}</td><td class="py-3 pr-4">${fmtTime(p.heureDepart)||'—'}</td><td class="py-3 pr-4 ${(p.retardMinutes||0)>0?'text-error':''}">${p.retardMinutes||0}min</td><td class="py-3 pr-4">${statusBadge(p.statut||'—')}</td><td class="py-3"><button onclick="showAdjustPtgModal('${esc(p.idPointage)}')" class="text-primary text-xs hover:underline">Ajuster</button></td></tr>`).join('');
@@ -998,8 +1045,26 @@ async function loadValidation(){const equipe=el('validationTeamFilter')?.value;c
       <td class="py-3"><button onclick="processLeave('${esc(l.idDemande)}','validate')" class="text-tertiary text-xs hover:underline mr-2">Valider</button><button onclick="showRejectLeaveModal('${esc(l.idDemande)}')" class="text-error text-xs hover:underline mr-2">Refuser</button><button onclick="showLeaveDetail('${esc(l.idDemande)}')" class="text-primary text-xs hover:underline">Détail</button></td></tr>`).join('');
   }catch(e){toast(e.message,'error');}}
 
-/* Fixed: use action='validate'/'reject' + commentaire, not decision */
-async function processLeave(id,action){try{await api('apiProcessLeave',S.token,{idDemande:id,action,commentaire:''});toast('Traitée','success');loadValidation();}catch(e){toast(e.message,'error');}}
+/* Validation modal with imputation choice */
+function showValidationModal(id){
+  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Valider la demande</h3>
+    <div class="space-y-4">
+      <div><label class="text-xs text-on-surface-var mb-2 block font-medium">Imputation du solde</label>
+        <div class="flex gap-3">
+          <label class="flex-1 glass-sm p-3 rounded-xl cursor-pointer border-2 border-transparent has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+            <input type="radio" name="valImputation" value="normal" checked class="accent-primary mr-2"><span class="text-sm font-medium">Normal</span>
+            <div class="text-[11px] text-on-surface-var mt-1">Déduire du solde congé annuel</div></label>
+          <label class="flex-1 glass-sm p-3 rounded-xl cursor-pointer border-2 border-transparent has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+            <input type="radio" name="valImputation" value="nonConsomme" class="accent-primary mr-2"><span class="text-sm font-medium">Non consommé</span>
+            <div class="text-[11px] text-on-surface-var mt-1">Déduire du solde N-1 non consommé</div></label>
+        </div>
+      </div>
+      <div><label class="text-xs text-on-surface-var mb-1 block">Commentaire (optionnel)</label><textarea id="valComment" class="input-field" rows="2" placeholder="Commentaire admin..."></textarea></div>
+      <div class="flex gap-3"><button onclick="doValidateLeave('${esc(id)}')" class="btn-primary flex-1">Confirmer la validation</button><button onclick="closeModal()" class="btn-ghost flex-1">Annuler</button></div>
+    </div>`);
+}
+async function doValidateLeave(id){const mode=document.querySelector('input[name="valImputation"]:checked')?.value||'normal';const comment=el('valComment')?.value||'';try{await api('apiProcessLeave',S.token,{idDemande:id,action:'validate',commentaire:comment,modeValidation:mode});toast('Validée','success');closeModal();loadValidation();}catch(e){toast(e.message,'error');}}
+async function processLeave(id,action){if(action==='validate')return showValidationModal(id);try{await api('apiProcessLeave',S.token,{idDemande:id,action,commentaire:''});toast('Traitée','success');loadValidation();}catch(e){toast(e.message,'error');}}
 
 /* Themed rejection modal instead of prompt() */
 function showRejectLeaveModal(id){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Refuser la demande</h3><div class="space-y-3">
@@ -1015,7 +1080,7 @@ async function showLeaveDetail(id){
         ${[['Agent',l.nomAgent],['Équipe',l.equipe],['Type',l.typeConge],['Début',fmtDate(l.dateDebut)],['Fin',fmtDate(l.dateFin)],['Jours',l.nbJours],['Demi-journée',l.demiJournee||'Non'],['Imputation',l.imputationSolde||'normal'],['Motif',l.motif],['Créé le',fmtDateTime(l.dateCreation)],['Traité le',fmtDateTime(l.dateTraitement)],['Admin',l.adminTraitant],['Commentaire',l.commentaireAdmin]].filter(([,v])=>v).map(([k,v])=>`<div class="flex justify-between py-1 border-b border-outline-var/10"><span class="text-on-surface-var">${k}</span><span class="text-right max-w-[250px]">${k==='Statut'?statusBadge(v):esc(v)}</span></div>`).join('')}
         <div class="flex justify-between py-1"><span class="text-on-surface-var">Statut</span><span>${statusBadge(l.statut)}</span></div>
       </div>
-      ${perms.canValidate?`<div class="flex gap-3 mt-5"><button onclick="processLeave('${esc(l.idDemande)}','validate');closeModal()" class="btn-primary flex-1">Valider</button><button onclick="closeModal();showRejectLeaveModal('${esc(l.idDemande)}')" class="btn-danger flex-1">Refuser</button></div>`:''}`);
+      ${perms.canValidate?`<div class="flex gap-3 mt-5"><button onclick="closeModal();showValidationModal('${esc(l.idDemande)}')" class="btn-primary flex-1">Valider</button><button onclick="closeModal();showRejectLeaveModal('${esc(l.idDemande)}')" class="btn-danger flex-1">Refuser</button></div>`:''}`);
   }catch(e){toast(e.message,'error');}}
 
 async function loadHistory(){const action=el('historySearch')?.value||'';const f={};if(action)f.action=action;
@@ -1122,7 +1187,7 @@ function showAdjustPtgModal(id){openModal(`<h3 class="font-headline font-semibol
 async function doAdjPtg(id){try{await api('apiAdminAdjustPointage',S.token,{idPointage:id,heureArrivee:el('ajA').value,heureDepart:el('ajD').value,notes:el('ajN').value});toast('OK','success');closeModal();loadAdminPointage();}catch(e){toast(e.message,'error');}}
 
 /* =========== BOOT =========== */
-(async function(){const ok=await checkSession();if(ok)await initApp();else el('loginView').style.display='flex';})();
+(async function(){el('diamondBg').classList.add('animating');const ok=await checkSession();if(ok)await initApp();else el('loginView').style.display='flex';el('diamondBg').classList.remove('animating');})();
 </script>
 </body>
 </html>
