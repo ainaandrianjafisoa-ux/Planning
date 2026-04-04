@@ -647,8 +647,8 @@ const S={token:null,user:null,config:null,balance:null,currentView:'conges',curr
 function mondayOf(d){d=new Date(d);d.setDate(d.getDate()-((d.getDay()+6)%7));d.setHours(0,0,0,0);return d;}
 function isoDate(d){return d instanceof Date?d.toISOString().slice(0,10):String(d||'').slice(0,10);}
 function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
-function fmtDate(s){if(!s)return'—';const d=new Date(s);return isNaN(d)?'—':d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});}
-function fmtTime(s){if(!s)return'—';return String(s).slice(0,5);}
+function fmtDate(s){if(!s||s==='—')return'—';const d=new Date(s);return isNaN(d)?'—':d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});}
+function fmtTime(s){if(!s||s==='—')return'';return String(s).slice(0,5);}
 function fmtDateTime(s){if(!s)return'—';const d=new Date(s);return isNaN(d)?'—':d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
 function esc(s){const d=document.createElement('div');d.textContent=String(s??'');return d.innerHTML;}
 function el(id){return document.getElementById(id);}
@@ -660,10 +660,8 @@ function statusBadge(s){const m={'En attente':'badge-pending','Validé':'badge-a
 /* =========== API =========== */
 function api(fn,...args){
   return new Promise((ok,ko)=>{
-    google.script.run
-      .withSuccessHandler(r=>{if(r&&r.ok)ok(r);else ko(new Error(r?.error||r?.message||'Erreur'));})
-      .withFailureHandler(e=>ko(new Error(e?.message||String(e))))
-      [fn](...args);
+    google.script.run.withSuccessHandler(r=>{if(r&&r.ok)ok(r);else ko(new Error(r?.error||r?.message||'Erreur'));})
+      .withFailureHandler(e=>ko(new Error(e?.message||String(e))))[fn](...args);
   });
 }
 
@@ -671,24 +669,11 @@ function api(fn,...args){
 function toast(msg,type='info'){const b=el('toastBox'),t=document.createElement('div');t.className=`toast toast-${type}`;t.textContent=msg;b.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},4000);}
 
 /* =========== THEME =========== */
-function toggleTheme(){
-  const h=document.documentElement, cur=h.getAttribute('data-theme');
-  const next=cur==='dark'?'light':'dark';
-  h.setAttribute('data-theme',next);
-  el('themeBtn').innerHTML=`<span class="material-symbols-outlined text-xl">${next==='dark'?'light_mode':'dark_mode'}</span>`;
-  sessionStorage.setItem('theme',next);
-}
-(function(){const t=sessionStorage.getItem('theme');if(t){document.documentElement.setAttribute('data-theme',t);} })();
+function toggleTheme(){const h=document.documentElement,cur=h.getAttribute('data-theme'),next=cur==='dark'?'light':'dark';h.setAttribute('data-theme',next);el('themeBtn').innerHTML=`<span class="material-symbols-outlined text-xl">${next==='dark'?'light_mode':'dark_mode'}</span>`;sessionStorage.setItem('theme',next);}
+(function(){const t=sessionStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})();
 
 /* =========== AUTH =========== */
-async function doLogin(){
-  const uid=el('loginId').value.trim(),pw=el('loginPw').value;
-  if(!uid||!pw)return toast('Remplissez tous les champs','error');
-  el('loginBtn').disabled=true;
-  try{const r=await api('apiLogin',uid,pw);S.token=r.token;S.user=r.user;sessionStorage.setItem('token',S.token);await initApp();}
-  catch(e){el('loginError').textContent=e.message;el('loginError').classList.remove('hidden');toast(e.message,'error');}
-  finally{el('loginBtn').disabled=false;}
-}
+async function doLogin(){const uid=el('loginId').value.trim(),pw=el('loginPw').value;if(!uid||!pw)return toast('Remplissez tous les champs','error');el('loginBtn').disabled=true;try{const r=await api('apiLogin',uid,pw);S.token=r.token;S.user=r.user;sessionStorage.setItem('token',S.token);await initApp();}catch(e){el('loginError').textContent=e.message;el('loginError').classList.remove('hidden');toast(e.message,'error');}finally{el('loginBtn').disabled=false;}}
 async function doLogout(){try{await api('apiLogout',S.token);}catch(e){}sessionStorage.removeItem('token');S.token=null;S.user=null;el('appShell').style.display='none';el('loginView').style.display='flex';}
 async function checkSession(){const t=sessionStorage.getItem('token');if(!t)return false;try{const r=await api('apiGetSession',t);S.token=t;S.user=r.user;return true;}catch(e){sessionStorage.removeItem('token');return false;}}
 
@@ -701,49 +686,22 @@ async function initApp(){
   const isAdmin=S.user?.role==='admin';
   document.querySelectorAll('.admin-only').forEach(e=>e.style.display=isAdmin?'':'none');
   if(S.config?.leaveTypes)['leaveType','quickLeaveType'].forEach(id=>{const s=el(id);if(s)s.innerHTML=S.config.leaveTypes.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');});
-  // Set default dates for pointage filters
-  const now=new Date(),firstOfMonth=new Date(now.getFullYear(),now.getMonth(),1);
-  if(el('myPtgDateFrom'))el('myPtgDateFrom').value=isoDate(firstOfMonth);
+  const now=new Date(),fom=new Date(now.getFullYear(),now.getMonth(),1);
+  if(el('myPtgDateFrom'))el('myPtgDateFrom').value=isoDate(fom);
   if(el('myPtgDateTo'))el('myPtgDateTo').value=isoDate(now);
-  if(el('adminPtgDateFrom'))el('adminPtgDateFrom').value=isoDate(firstOfMonth);
+  if(el('adminPtgDateFrom'))el('adminPtgDateFrom').value=isoDate(fom);
   if(el('adminPtgDateTo'))el('adminPtgDateTo').value=isoDate(now);
   if(el('overtimeYear'))el('overtimeYear').value=now.getFullYear();
   if(isAdmin){try{const ur=await api('apiAdminListUsers',S.token);S.users=ur.users||[];S.teams=[...new Set(S.users.map(u=>u.equipe).filter(Boolean))].sort();populateTeamFilters(S.teams);}catch(e){}}
   navigateTo(S.currentView);startClock();
 }
-function populateTeamFilters(teams){
-  ['groupPlanTeamFilter','adminPlanTeamFilter','presenceTeamFilter','adminPtgTeam','overtimeTeam','validationTeamFilter','agentTemplateTeam'].forEach(id=>{
-    const s=el(id);if(!s)return;const v=s.value;
-    s.innerHTML='<option value="">Toutes équipes</option>'+teams.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');s.value=v;
-  });
-}
+function populateTeamFilters(teams){['groupPlanTeamFilter','adminPlanTeamFilter','presenceTeamFilter','adminPtgTeam','overtimeTeam','validationTeamFilter','agentTemplateTeam'].forEach(id=>{const s=el(id);if(!s)return;const v=s.value;s.innerHTML='<option value="">Toutes équipes</option>'+teams.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');s.value=v;});}
 
 /* =========== NAV =========== */
-function navigateTo(view){
-  S.currentView=view;
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===view));
-  el('viewTitle').textContent={conges:'Congés',planning:'Planning',pointage:'Pointage',admin:'Administration'}[view]||view;
-  document.querySelectorAll('.view-section').forEach(s=>s.style.display='none');
-  const v=el('view'+view.charAt(0).toUpperCase()+view.slice(1));if(v){v.style.display='block';v.classList.add('fade-in');}
-  loadViewData(view);
-}
-function switchSubTab(view,sub){
-  S.currentSubTabs[view]=sub;
-  const v=el('view'+view.charAt(0).toUpperCase()+view.slice(1));if(!v)return;
-  v.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.subtab===sub));
-  v.querySelectorAll('.subtab-content').forEach(c=>c.style.display='none');
-  const s=el('sub-'+sub);if(s){s.style.display='block';s.classList.add('fade-in');}
-  loadSubTabData(sub);
-}
+function navigateTo(view){S.currentView=view;document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===view));el('viewTitle').textContent={conges:'Congés',planning:'Planning',pointage:'Pointage',admin:'Administration'}[view]||view;document.querySelectorAll('.view-section').forEach(s=>s.style.display='none');const v=el('view'+view.charAt(0).toUpperCase()+view.slice(1));if(v){v.style.display='block';v.classList.add('fade-in');}loadViewData(view);}
+function switchSubTab(view,sub){S.currentSubTabs[view]=sub;const v=el('view'+view.charAt(0).toUpperCase()+view.slice(1));if(!v)return;v.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.subtab===sub));v.querySelectorAll('.subtab-content').forEach(c=>c.style.display='none');const s=el('sub-'+sub);if(s){s.style.display='block';s.classList.add('fade-in');}loadSubTabData(sub);}
 function loadViewData(view){const d={conges:'conges-new',planning:'plan-my',pointage:'ptg-my',admin:'adm-validation'};switchSubTab(view,S.currentSubTabs[view]||d[view]);}
-function loadSubTabData(sub){
-  const m={
-    'conges-new':loadBalance,'conges-my':loadMyLeaves,'conges-group':loadGroupLeaves,'conges-calendar':loadCalendar,'conges-balance':loadBalanceCards,
-    'plan-my':loadMyPlanning,'plan-group':loadGroupPlanning,'plan-admin':()=>{loadAgentTemplates();loadAdminPlanning();loadAdminSwaps();},'plan-presence':loadPresence,
-    'ptg-my':loadMyPointage,'ptg-admin':loadAdminPointage,'ptg-overtime':loadOvertime,
-    'adm-validation':loadValidation,'adm-history':loadHistory,'adm-users':loadUsers,'adm-models':loadModels,'adm-plages':loadPlages,'adm-params':loadParams,'adm-holidays':loadHolidays,'adm-dashboard':()=>{loadDashboard();loadTeamRules();}
-  };if(m[sub])m[sub]();
-}
+function loadSubTabData(sub){const m={'conges-new':loadBalance,'conges-my':loadMyLeaves,'conges-group':loadGroupLeaves,'conges-calendar':loadCalendar,'conges-balance':loadBalanceCards,'plan-my':loadMyPlanning,'plan-group':loadGroupPlanning,'plan-admin':()=>{loadAgentTemplates();loadAdminPlanning();loadAdminSwaps();},'plan-presence':loadPresence,'ptg-my':loadMyPointage,'ptg-admin':loadAdminPointage,'ptg-overtime':loadOvertime,'adm-validation':loadValidation,'adm-history':loadHistory,'adm-users':loadUsers,'adm-models':loadModels,'adm-plages':loadPlages,'adm-params':loadParams,'adm-holidays':loadHolidays,'adm-dashboard':()=>{loadDashboard();loadTeamRules();}};if(m[sub])m[sub]();}
 function startClock(){function t(){const n=new Date(),s=n.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});el('liveClock').textContent=s;if(el('ptgClock'))el('ptgClock').textContent=s;if(el('ptgDate'))el('ptgDate').textContent=n.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}t();setInterval(t,1000);}
 
 
@@ -759,16 +717,9 @@ async function loadBalance(){
     try{const l=await api('apiListLeaves',S.token,{scope:'mine',statut:'En attente'});el('balancePending').textContent=(l.items||[]).length;}catch(e){}
   }catch(e){toast('Erreur solde: '+e.message,'error');}
 }
-async function submitLeave(){
-  const p={typeConge:el('leaveType').value,dateDebut:el('leaveStart').value,dateFin:el('leaveEnd').value||el('leaveStart').value,demiJournee:el('leaveDemiJournee').value,motif:el('leaveMotif').value};
-  if(!p.typeConge||!p.dateDebut)return toast('Remplissez les champs obligatoires','error');
-  try{await api('apiCreateLeave',S.token,p);toast('Demande soumise','success');el('leaveMotif').value='';loadBalance();}catch(e){toast(e.message,'error');}
-}
-async function submitQuickLeave(){
-  const p={date:el('quickLeaveDate').value,typeConge:el('quickLeaveType').value,demiJournee:el('quickLeaveDemi').value,motif:el('quickLeaveMotif').value};
-  if(!p.date||!p.typeConge)return toast('Date et type requis','error');
-  try{await api('apiCreateLeaveSingleDay',S.token,p);toast('Dépôt rapide effectué','success');loadCalendar();}catch(e){toast(e.message,'error');}
-}
+async function submitLeave(){const p={typeConge:el('leaveType').value,dateDebut:el('leaveStart').value,dateFin:el('leaveEnd').value||el('leaveStart').value,demiJournee:el('leaveDemiJournee').value,motif:el('leaveMotif').value};if(!p.typeConge||!p.dateDebut)return toast('Champs obligatoires','error');try{await api('apiCreateLeave',S.token,p);toast('Demande soumise','success');el('leaveMotif').value='';loadBalance();}catch(e){toast(e.message,'error');}}
+async function submitQuickLeave(){const p={date:el('quickLeaveDate').value,typeConge:el('quickLeaveType').value,demiJournee:el('quickLeaveDemi').value,motif:el('quickLeaveMotif').value};if(!p.date||!p.typeConge)return toast('Date et type requis','error');try{await api('apiCreateLeaveSingleDay',S.token,p);toast('Dépôt rapide effectué','success');loadCalendar();}catch(e){toast(e.message,'error');}}
+
 async function loadMyLeaves(){
   const f={scope:'mine'};const st=el('myLeavesFilter')?.value;if(st)f.statut=st;
   try{const r=await api('apiListLeaves',S.token,f);const items=r.items||[];
@@ -776,11 +727,11 @@ async function loadMyLeaves(){
     el('myLeavesBody').innerHTML=items.map(l=>`<tr class="table-row border-b border-outline-var/10">
       <td class="py-3 pr-4">${esc(l.typeConge)}</td><td class="py-3 pr-4">${fmtDate(l.dateDebut)}</td><td class="py-3 pr-4">${fmtDate(l.dateFin)}</td>
       <td class="py-3 pr-4">${l.nbJours||'—'}</td><td class="py-3 pr-4">${statusBadge(l.statut)}</td>
-      <td class="py-3">${l.statut==='En attente'?`<button onclick="cancelLeave('${esc(l.idDemande)}')" class="text-error text-xs hover:underline">Annuler</button>`:'—'}</td>
-    </tr>`).join('');
+      <td class="py-3">${l.statut==='En attente'?`<button onclick="cancelLeave('${esc(l.idDemande)}')" class="text-error text-xs hover:underline">Annuler</button>`:'—'}</td></tr>`).join('');
   }catch(e){toast(e.message,'error');}
 }
-async function cancelLeave(id){if(!confirm('Annuler cette demande ?'))return;try{await api('apiCancelLeave',S.token,id);toast('Annulée','success');loadMyLeaves();}catch(e){toast(e.message,'error');}}
+async function cancelLeave(id){if(!confirm('Annuler ?'))return;try{await api('apiCancelLeave',S.token,id);toast('Annulée','success');loadMyLeaves();}catch(e){toast(e.message,'error');}}
+
 async function loadGroupLeaves(){
   const f={scope:'group'};const st=el('groupLeaveStatus')?.value;if(st)f.statut=st;
   try{const r=await api('apiListLeaves',S.token,f);const items=r.items||[];
@@ -792,7 +743,7 @@ async function loadGroupLeaves(){
   }catch(e){toast(e.message,'error');}
 }
 
-/* Calendar - uses events API which returns FullCalendar-like events */
+/* Calendar with rich event labels like mockup */
 async function loadCalendar(){
   const year=S.calYear,month=S.calMonth;
   el('calendarTitle').textContent=new Date(year,month).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
@@ -800,23 +751,30 @@ async function loadCalendar(){
   let startPad=(firstDay.getDay()+6)%7;
   let events=[];
   try{const r=await api('apiGetCalendarEvents',S.token,{annee:year,mois:month+1});events=r.events||[];}catch(e){}
-  // Build date->events map using start field
   const eMap={};events.forEach(ev=>{
-    const sd=isoDate(ev.start||ev.dateDebut||ev.date);
-    const ed=isoDate(ev.end||ev.dateFin||sd);
-    // Expand multi-day events
+    const sd=isoDate(ev.start||ev.dateDebut||ev.date);const ed=isoDate(ev.end||ev.dateFin||sd);
     let cur=new Date(sd);const endD=new Date(ed);
     while(cur<=endD){const k=isoDate(cur);if(!eMap[k])eMap[k]=[];eMap[k].push(ev);cur=addDays(cur,1);}
   });
   let html='';const today=isoDate(new Date());
-  for(let i=0;i<startPad;i++)html+='<div class="h-20"></div>';
+  for(let i=0;i<startPad;i++)html+='<div class="min-h-[100px] rounded-lg p-2 opacity-30"></div>';
   for(let d=1;d<=lastDay.getDate();d++){
     const dt=isoDate(new Date(year,month,d)),isT=dt===today,evts=eMap[dt]||[];
-    const dots=evts.slice(0,3).map(e=>{const ep=e.extendedProps||{};const c=ep.statut==='Validé'?'bg-tertiary':ep.statut==='En attente'?'bg-primary':'bg-error';
-      return`<div class="w-1.5 h-1.5 rounded-full ${c}" title="${esc(e.title||'')}"></div>`;}).join('');
-    html+=`<div class="h-20 rounded-lg p-1.5 text-xs cursor-pointer transition hover:bg-outline-var/10 ${isT?'ring-1 ring-primary bg-primary/5':''}" onclick="onCalendarDayClick('${dt}')">
-      <div class="font-medium ${isT?'text-primary':'text-on-surface'}">${d}</div><div class="flex gap-0.5 mt-1 flex-wrap">${dots}</div>
-      ${evts.length>3?`<div class="text-[10px] text-on-surface-var">+${evts.length-3}</div>`:''}</div>`;
+    const isWE=new Date(year,month,d).getDay()%6===0;
+    // Build event labels like the mockup
+    const evLabels=evts.slice(0,3).map(e=>{
+      const ep=e.extendedProps||{};const title=e.title||`${ep.typeConge||'Congé'} - ${ep.nomAgent||''}`;
+      const st=ep.statut||'';
+      let cls='bg-tertiary/20 text-tertiary border-tertiary/30';
+      if(st==='En attente')cls='bg-primary/20 text-primary border-primary/30';
+      else if(st==='Refusé')cls='bg-error/15 text-error border-error/30';
+      return`<div class="text-[10px] px-1.5 py-0.5 rounded border truncate ${cls}" title="${esc(title)}">${esc(title)}</div>`;
+    }).join('');
+    html+=`<div class="min-h-[100px] rounded-lg p-2 cursor-pointer transition border border-transparent hover:border-outline-var/30 ${isT?'ring-2 ring-primary bg-primary/5':''}${isWE?' bg-outline-var/5':''}" onclick="onCalendarDayClick('${dt}')">
+      <div class="font-semibold text-sm mb-1 ${isT?'text-primary':isWE?'text-primary/60':'text-on-surface'}">${d}</div>
+      <div class="space-y-0.5">${evLabels}</div>
+      ${evts.length>3?`<div class="text-[10px] text-on-surface-var mt-0.5">+${evts.length-3} autres</div>`:''}
+    </div>`;
   }
   el('calendarGrid').innerHTML=html;
 }
@@ -825,9 +783,16 @@ function onCalendarDayClick(dt){el('quickLeaveDate').value=dt;}
 
 async function loadBalanceCards(){
   try{const r=await api('apiGetMyBalance',S.token);S.balance=r;
-    const cards=[{l:'Solde initial',v:r.soldeInitial??0,i:'account_balance',c:'text-primary'},{l:'Congés pris',v:r.congesPris??0,i:'event_busy',c:'text-error'},{l:'Solde restant',v:r.soldeRestant??0,i:'savings',c:'text-tertiary'},{l:'N-1 Initial',v:r.soldeNonConsommeInitial??0,i:'history',c:'text-secondary'},{l:'N-1 Pris',v:r.congesNonConsommesPris??0,i:'event_repeat',c:'text-error'},{l:'N-1 Restant',v:r.soldeNonConsommeRestant??0,i:'inventory',c:'text-primary'}];
-    el('balanceCards').innerHTML=cards.map(c=>`<div class="glass p-5 kpi-card ${c.c}"><div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-lg">${c.i}</span><span class="text-xs text-on-surface-var">${c.l}</span></div><div class="text-2xl font-headline font-bold">${c.v}</div></div>`).join('');
-    const types=S.config?.leaveTypes||['Annuel','Maladie','Exceptionnel','Sans solde'];
+    el('balanceCards').innerHTML=[
+      {l:'Solde initial',v:r.soldeInitial??0,i:'account_balance',c:'text-primary',g:'Congé normal'},
+      {l:'Congés pris',v:r.congesPris??0,i:'event_busy',c:'text-error',g:'Congé normal'},
+      {l:'Solde restant',v:r.soldeRestant??0,i:'savings',c:'text-tertiary',g:'Congé normal'},
+      {l:'N-1 Initial',v:r.soldeNonConsommeInitial??0,i:'history',c:'text-secondary',g:'Non consommé'},
+      {l:'N-1 Pris',v:r.congesNonConsommesPris??0,i:'event_repeat',c:'text-error',g:'Non consommé'},
+      {l:'N-1 Restant',v:r.soldeNonConsommeRestant??0,i:'inventory',c:'text-primary',g:'Non consommé'}
+    ].map((c,i)=>`${i===0?'<div class="col-span-full text-xs font-semibold text-on-surface-var uppercase tracking-wider mb-1">Solde Normal</div>':''}${i===3?'<div class="col-span-full text-xs font-semibold text-on-surface-var uppercase tracking-wider mb-1 mt-2">Solde Non Consommé (N-1)</div>':''}
+      <div class="glass p-5 kpi-card ${c.c}"><div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-lg">${c.i}</span><span class="text-xs text-on-surface-var">${c.l}</span></div><div class="text-2xl font-headline font-bold">${c.v}</div></div>`).join('');
+    const types=S.config?.leaveTypes||['Annuel'];
     el('balanceUsageChart').innerHTML=types.map(t=>{const v=t==='Annuel'?(r.congesPris||0):0;const mx=t==='Annuel'?(r.soldeInitial||30):10;const p=mx?Math.round(v/mx*100):0;return`<div><div class="flex justify-between text-xs mb-1"><span>${esc(t)}</span><span class="text-on-surface-var">${v} j</span></div><div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div></div>`;}).join('');
   }catch(e){toast(e.message,'error');}
 }
@@ -840,10 +805,10 @@ async function loadMyPlanning(){
   try{
     const r=await api('apiGetMyPlanning',S.token,{dateDebut:isoDate(mon),dateFin:isoDate(addDays(mon,6))});
     const shifts=r.shifts||[];const sMap={};shifts.forEach(s=>{const d=isoDate(s.date);if(!sMap[d])sMap[d]=[];sMap[d].push(s);});
-    const ts=sMap[today]||[];
-    if(ts.length){const s=ts[0];el('todayShiftInfo').textContent=s.isOff==='Oui'||s.isOff===true?'Jour OFF':`${s.nomModele||'Shift'} — ${fmtTime(s.heureDebut)} à ${fmtTime(s.heureFin)}`;el('todayShiftTime').textContent=s.isOff?'Repos':`Durée: ${s.dureePrevue||'—'}h`;}
+    const ts=(sMap[today]||[])[0];
+    if(ts){el('todayShiftInfo').textContent=(ts.isOff==='Oui'||ts.isOff===true)?'Jour OFF':`${ts.nomModele||'Shift'} — ${fmtTime(ts.heureDebut)} à ${fmtTime(ts.heureFin)}`;el('todayShiftTime').textContent=ts.isOff?'Repos':`Durée: ${ts.dureePrevue||'—'}h`;}
     else{el('todayShiftInfo').textContent='Aucun shift';el('todayShiftTime').textContent='';}
-    const tot=shifts.filter(s=>!(s.isOff==='Oui'||s.isOff===true)).length;const hrs=shifts.reduce((a,s)=>a+(parseFloat(s.dureePrevue)||0),0);
+    const tot=shifts.filter(s=>!(s.isOff==='Oui'||s.isOff===true)).length,hrs=shifts.reduce((a,s)=>a+(parseFloat(s.dureePrevue)||0),0);
     el('myPlanKpis').innerHTML=[{l:'Shifts',v:tot,i:'event',c:'text-primary'},{l:'Heures',v:hrs.toFixed(1)+'h',i:'schedule',c:'text-tertiary'},{l:'OFF',v:shifts.filter(s=>s.isOff==='Oui'||s.isOff===true).length,i:'bed',c:'text-secondary'},{l:'Échanges',v:'—',i:'swap_horiz',c:'text-primary'}].map(k=>`<div class="glass-sm p-4 kpi-card ${k.c}"><span class="material-symbols-outlined text-lg mb-1">${k.i}</span><div class="text-xl font-headline font-bold">${k.v}</div><div class="text-[11px] text-on-surface-var">${k.l}</div></div>`).join('');
     el('myPlanGrid').innerHTML=days.map((d,i)=>{const dt=isoDate(d),ds=sMap[dt]||[],isT=dt===today;
       return`<div class="rounded-xl p-3 ${isT?'ring-1 ring-primary bg-primary/5':'glass-sm'} min-h-[120px]">
@@ -856,454 +821,305 @@ async function loadMyPlanning(){
 function myPlanWeekNav(dir){S.myPlanWeek=addDays(S.myPlanWeek,dir*7);loadMyPlanning();}
 
 async function loadMySwaps(){
-  try{const r=await api('apiListShiftSwapRequests',S.token,{});const items=r.items||[];const my=items.filter(s=>s.requesterUserId===S.user?.userId);
-    if(!my.length){el('swapHistoryContainer').innerHTML='<div class="text-center text-on-surface-var py-4">Aucun échange</div>';return;}
-    el('swapHistoryContainer').innerHTML=my.map(s=>renderSwapCard(s,false)).join('');
+  try{const r=await api('apiListShiftSwapRequests',S.token,{});const items=r.items||[];
+    if(!items.length){el('swapHistoryContainer').innerHTML='<div class="text-center text-on-surface-var py-4">Aucun échange</div>';return;}
+    el('swapHistoryContainer').innerHTML=items.map(s=>renderSwapCard(s,false)).join('');
   }catch(e){}
 }
 
+/* Swap card with timeline showing actual shift times */
 function renderSwapCard(s,admin){
-  const reqShift=s.requesterShiftId?`Shift: ${fmtDate(s.dateShift)}`:'';
-  const tgtShift=s.targetShiftId?`Shift cible`:'';
+  // Timeline data from hydrated swap
+  const tl=s.timeline||[];
+  const reqTl=tl.find(t=>t.role==='requester')||{};
+  const tgtTl=tl.find(t=>t.role==='target')||{};
+  const reqTime=reqTl.heureDebut&&reqTl.heureFin?`${fmtTime(reqTl.heureDebut)}-${fmtTime(reqTl.heureFin)}`:(s.requesterShiftId||'—');
+  const tgtTime=tgtTl.heureDebut&&tgtTl.heureFin?`${fmtTime(tgtTl.heureDebut)}-${fmtTime(tgtTl.heureFin)}`:(s.targetShiftId||'—');
+  const reqPause=reqTl.pauseDebut&&reqTl.pauseFin?`Pause: ${fmtTime(reqTl.pauseDebut)}-${fmtTime(reqTl.pauseFin)}`:'';
+  const tgtPause=tgtTl.pauseDebut&&tgtTl.pauseFin?`Pause: ${fmtTime(tgtTl.pauseDebut)}-${fmtTime(tgtTl.pauseFin)}`:'';
+
   return`<div class="glass-sm p-4 mb-3">
     <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
       <div class="flex items-center gap-3">
         <span class="material-symbols-outlined text-primary text-lg">swap_horiz</span>
         <div><div class="font-medium text-sm">${esc(s.requesterNom)} <span class="text-on-surface-var">→</span> ${esc(s.targetNom)}</div>
-          <div class="text-xs text-on-surface-var">${fmtDate(s.dateShift)} ${s.requesterComment?'— '+esc(s.requesterComment):''}</div></div>
+          <div class="text-xs text-on-surface-var">${fmtDate(s.dateShift)}${s.requesterComment?' — '+esc(s.requesterComment):''}</div></div>
       </div>
       <div class="flex items-center gap-2">${statusBadge(s.statut)}
-        ${admin&&s.statut==='En attente'?`<button onclick="processSwap('${esc(s.idSwap)}','approve')" class="text-tertiary text-xs hover:underline">Approuver</button><button onclick="processSwap('${esc(s.idSwap)}','reject')" class="text-error text-xs hover:underline">Refuser</button>`:''}
+        ${admin&&s.statut==='En attente'?`<button onclick="processSwap('${esc(s.idSwap)}','approve')" class="text-tertiary text-xs hover:underline">Approuver</button><button onclick="showRejectSwapModal('${esc(s.idSwap)}')" class="text-error text-xs hover:underline">Refuser</button>`:''}
         ${!admin&&s.statut==='En attente'?`<button onclick="doCancelSwap('${esc(s.idSwap)}')" class="text-error text-xs hover:underline">Annuler</button>`:''}
       </div>
     </div>
-    <!-- Timeline -->
+    <!-- Shift timeline -->
     <div class="timeline-bar border border-outline-var/20">
       <div class="timeline-segment bg-primary/15 text-primary flex-1">
-        <span class="material-symbols-outlined text-sm mr-1">person</span>${esc(s.requesterNom)} (${fmtTime(s.requesterShiftId||'—')})
+        <span class="material-symbols-outlined text-sm mr-1">person</span>${esc(s.requesterNom)} (${reqTime})
       </div>
       <div class="timeline-segment bg-outline-var/20 text-on-surface-var" style="width:40px"><span class="material-symbols-outlined text-sm">swap_horiz</span></div>
       <div class="timeline-segment bg-tertiary/15 text-tertiary flex-1">
-        <span class="material-symbols-outlined text-sm mr-1">person</span>${esc(s.targetNom)} (${fmtTime(s.targetShiftId||'—')})
+        <span class="material-symbols-outlined text-sm mr-1">person</span>${esc(s.targetNom)} (${tgtTime})
       </div>
+    </div>
+    <!-- Detailed shift chronology -->
+    <div class="grid grid-cols-2 gap-3 mt-2 text-[10px] text-on-surface-var">
+      <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary"></span>Début: ${fmtTime(reqTl.heureDebut)||'—'} | Fin: ${fmtTime(reqTl.heureFin)||'—'} ${reqPause?'| '+reqPause:''}</div>
+      <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-tertiary"></span>Début: ${fmtTime(tgtTl.heureDebut)||'—'} | Fin: ${fmtTime(tgtTl.heureFin)||'—'} ${tgtPause?'| '+tgtPause:''}</div>
     </div>
     ${s.adminComment?`<div class="text-xs text-on-surface-var mt-2">Admin: ${esc(s.adminComment)}</div>`:''}
   </div>`;
 }
 
-async function submitSwap(){
-  const p={dateShift:el('swapDate').value,targetUserId:el('swapTarget').value.trim().toUpperCase(),requesterComment:el('swapComment').value};
-  if(!p.dateShift||!p.targetUserId)return toast('Date et agent cible requis','error');
-  try{await api('apiAgentRequestShiftSwap',S.token,p);toast('Demande soumise','success');el('swapDate').value='';el('swapTarget').value='';el('swapComment').value='';loadMySwaps();}catch(e){toast(e.message,'error');}
-}
+async function submitSwap(){const p={dateShift:el('swapDate').value,targetUserId:el('swapTarget').value.trim().toUpperCase(),requesterComment:el('swapComment').value};if(!p.dateShift||!p.targetUserId)return toast('Date et agent requis','error');try{await api('apiAgentRequestShiftSwap',S.token,p);toast('Soumise','success');el('swapDate').value='';el('swapTarget').value='';el('swapComment').value='';loadMySwaps();}catch(e){toast(e.message,'error');}}
 async function doCancelSwap(id){if(!confirm('Annuler ?'))return;try{await api('apiCancelShiftSwap',S.token,id);toast('Annulé','success');loadMySwaps();}catch(e){toast(e.message,'error');}}
 
-/* Group Planning - uses agents+shiftsByUser structure */
-async function loadGroupPlanning(){
-  const mon=S.groupPlanWeek;el('groupPlanWeekTitle').textContent=weekLabel(mon);
-  try{const r=await api('apiGetGroupPlanning',S.token,{dateDebut:isoDate(mon),dateFin:isoDate(addDays(mon,6))});
-    renderPlanGrid(r,mon,el('groupPlanContainer'),false);
-  }catch(e){el('groupPlanContainer').innerHTML=`<div class="text-center text-error py-4">${esc(e.message)}</div>`;}
-}
+/* Group Planning */
+async function loadGroupPlanning(){const mon=S.groupPlanWeek;el('groupPlanWeekTitle').textContent=weekLabel(mon);try{const r=await api('apiGetGroupPlanning',S.token,{dateDebut:isoDate(mon),dateFin:isoDate(addDays(mon,6))});renderPlanGrid(r,mon,el('groupPlanContainer'),false);}catch(e){el('groupPlanContainer').innerHTML=`<div class="text-center text-error py-4">${esc(e.message)}</div>`;}}
 function groupPlanWeekNav(dir){S.groupPlanWeek=addDays(S.groupPlanWeek,dir*7);loadGroupPlanning();}
 
-/* Admin Planning - shows ALL team members even unscheduled */
+/* Admin Planning - shows ALL team members */
 async function loadAdminPlanning(){
-  const mon=S.adminPlanWeek;el('adminPlanWeekTitle').textContent=weekLabel(mon);
-  const equipe=el('adminPlanTeamFilter')?.value;
+  const mon=S.adminPlanWeek;el('adminPlanWeekTitle').textContent=weekLabel(mon);const equipe=el('adminPlanTeamFilter')?.value;
   try{const r=await api('apiAdminGetPlanning',S.token,{dateDebut:isoDate(mon),dateFin:isoDate(addDays(mon,6)),equipe});
-    // Enrich with all users from S.users if they belong to filtered team
-    const planUsers=r.users||[];
-    const planUserIds=new Set(planUsers.map(u=>u.userId));
-    S.users.forEach(u=>{
-      if(!planUserIds.has(u.userId)&&(u.actif==='Oui'||u.actif===true)){
-        if(!equipe||u.equipe===equipe){planUsers.push({userId:u.userId,nomAgent:u.nomComplet,equipe:u.equipe});}
-      }
-    });
-    r.users=planUsers;
-    renderPlanGrid(r,mon,el('adminPlanContainer'),true);
+    // Ensure all active users for team are included
+    const pUsers=r.users||[];const pIds=new Set(pUsers.map(u=>u.userId));
+    S.users.forEach(u=>{if(!pIds.has(u.userId)&&(u.actif==='Oui'||u.actif===true)&&(!equipe||u.equipe===equipe)){pUsers.push({userId:u.userId,nomAgent:u.nomComplet,equipe:u.equipe});}});
+    r.users=pUsers;renderPlanGrid(r,mon,el('adminPlanContainer'),true);
   }catch(e){el('adminPlanContainer').innerHTML=`<div class="text-center text-error py-4">${esc(e.message)}</div>`;}
 }
 function adminPlanWeekNav(dir){S.adminPlanWeek=addDays(S.adminPlanWeek,dir*7);loadAdminPlanning();}
 
+/* Fixed renderPlanGrid - handles shiftsByUser as object properly */
 function renderPlanGrid(data,monday,container,editable){
-  const days=weekDays(monday);
-  const shifts=data.shifts||[];const byUser=data.shiftsByUser||{};const users=data.users||data.agents||[];
-  // Build shiftsByUser if not provided
-  if(!Object.keys(byUser).length){shifts.forEach(s=>{const k=s.userId;if(!byUser[k])byUser[k]=[];byUser[k].push(s);});}
-  // Derive agent list
+  const days=weekDays(monday);const shifts=data.shifts||[];
+  // Build shiftsByUser - always rebuild from shifts array to avoid type issues
+  const byUser={};
+  shifts.forEach(s=>{const k=s.userId;if(!byUser[k])byUser[k]=[];byUser[k].push(s);});
+  const users=data.users||data.agents||[];
   let agentList=users.map(u=>({userId:u.userId,nom:u.nomAgent||u.nomComplet||u.userId,equipe:u.equipe}));
-  // Also add any userId from shifts not in users
   const knownIds=new Set(agentList.map(a=>a.userId));
   shifts.forEach(s=>{if(!knownIds.has(s.userId)){agentList.push({userId:s.userId,nom:s.nomAgent||s.userId,equipe:s.equipe});knownIds.add(s.userId);}});
   agentList.sort((a,b)=>(a.equipe||'').localeCompare(b.equipe||'')||(a.nom||'').localeCompare(b.nom||''));
-  if(!agentList.length){container.innerHTML='<div class="text-center text-on-surface-var py-6">Aucun agent trouvé</div>';return;}
+  if(!agentList.length){container.innerHTML='<div class="text-center text-on-surface-var py-6">Aucun agent</div>';return;}
   let html='<table class="w-full text-xs"><thead><tr class="text-on-surface-var border-b border-outline-var/20"><th class="py-2 px-2 text-left">Agent</th>';
   days.forEach((d,i)=>html+=`<th class="py-2 px-1 text-center">${JOURS[i]} ${d.getDate()}</th>`);
   html+='</tr></thead><tbody>';
   agentList.forEach(ag=>{
-    const uShifts=byUser[ag.userId]||shifts.filter(s=>s.userId===ag.userId);
+    const uShifts=byUser[ag.userId]||[];
     const sMap={};uShifts.forEach(s=>{const d=isoDate(s.date);if(!sMap[d])sMap[d]=[];sMap[d].push(s);});
     html+=`<tr class="table-row border-b border-outline-var/10"><td class="py-2 px-2 font-medium whitespace-nowrap">${esc(ag.nom)}<div class="text-[10px] text-on-surface-var">${esc(ag.equipe||'')}</div></td>`;
     days.forEach(d=>{const dt=isoDate(d),ds=sMap[dt]||[];html+='<td class="py-1 px-1 text-center">';
-      if(ds.length){ds.forEach(s=>{if(s.isOff==='Oui'||s.isOff===true){html+='<div class="shift-cell bg-outline-var/20 text-on-surface-var">OFF</div>';}
+      if(ds.length){ds.forEach(s=>{if(s.isOff==='Oui'||s.isOff===true)html+='<div class="shift-cell bg-outline-var/20 text-on-surface-var">OFF</div>';
         else{const bg=s.couleurModele?`background:${s.couleurModele}25;color:${s.couleurModele};border-color:${s.couleurModele}40`:'';const ck=editable?`onclick="showShiftModal('${esc(s.idShift)}')"`:'';html+=`<div class="shift-cell mb-0.5" style="${bg}" ${ck}>${fmtTime(s.heureDebut)}-${fmtTime(s.heureFin)}</div>`;}});}
       else{if(editable)html+=`<div class="shift-cell bg-outline-var/10 text-on-surface-var/40 cursor-pointer" onclick="showShiftModal(null,'${dt}','${esc(ag.userId)}')">+</div>`;else html+='<div class="text-on-surface-var/30">—</div>';}
-      html+='</td>';});
-    html+='</tr>';});
+      html+='</td>';});html+='</tr>';});
   html+='</tbody></table>';container.innerHTML=html;
 }
 
-/* Agent Templates */
+/* Agent Templates - use apiAdminListPlanningAgents */
 async function loadAgentTemplates(){
   const equipe=el('agentTemplateTeam')?.value;
-  let agents=S.users.filter(u=>u.actif==='Oui'||u.actif===true);
-  if(equipe)agents=agents.filter(u=>u.equipe===equipe);
-  agents.sort((a,b)=>(a.nomComplet||'').localeCompare(b.nomComplet||''));
-  el('agentTemplatesContainer').innerHTML=agents.map(a=>`<div class="agent-chip ${S.selectedAgents.has(a.userId)?'selected':''}" onclick="toggleAgentSelect('${esc(a.userId)}',this)">
-    <div class="w-7 h-7 rounded-full bg-outline-var/30 flex items-center justify-center text-xs font-bold">${esc((a.nomComplet||a.userId).substring(0,2).toUpperCase())}</div>
-    <div><div class="text-sm font-medium">${esc(a.nomComplet)}</div><div class="text-[10px] text-on-surface-var font-mono">${esc(a.userId)}</div></div>
-  </div>`).join('')||'<div class="text-on-surface-var text-sm">Aucun agent</div>';
+  try{
+    const r=await api('apiAdminListPlanningAgents',S.token,{equipe});
+    const agents=r.items||[];
+    if(!agents.length){el('agentTemplatesContainer').innerHTML='<div class="text-on-surface-var text-sm">Aucun agent</div>';return;}
+    el('agentTemplatesContainer').innerHTML=agents.map(a=>`<div class="agent-chip ${S.selectedAgents.has(a.userId)?'selected':''}" onclick="toggleAgentSelect('${esc(a.userId)}',this)">
+      <div class="w-7 h-7 rounded-full bg-outline-var/30 flex items-center justify-center text-xs font-bold">${esc((a.nomAgent||a.userId).substring(0,2).toUpperCase())}</div>
+      <div><div class="text-sm font-medium">${esc(a.nomAgent)}</div><div class="text-[10px] text-on-surface-var font-mono">${esc(a.userId)}</div></div>
+    </div>`).join('');
+  }catch(e){
+    // Fallback to S.users
+    let agents=S.users.filter(u=>u.actif==='Oui'||u.actif===true);if(equipe)agents=agents.filter(u=>u.equipe===equipe);
+    el('agentTemplatesContainer').innerHTML=agents.map(a=>`<div class="agent-chip ${S.selectedAgents.has(a.userId)?'selected':''}" onclick="toggleAgentSelect('${esc(a.userId)}',this)">
+      <div class="w-7 h-7 rounded-full bg-outline-var/30 flex items-center justify-center text-xs font-bold">${esc((a.nomComplet||a.userId).substring(0,2).toUpperCase())}</div>
+      <div><div class="text-sm font-medium">${esc(a.nomComplet)}</div><div class="text-[10px] text-on-surface-var font-mono">${esc(a.userId)}</div></div>
+    </div>`).join('')||'<div class="text-on-surface-var text-sm">Aucun agent</div>';
+  }
 }
 function toggleAgentSelect(id,chip){if(S.selectedAgents.has(id)){S.selectedAgents.delete(id);chip.classList.remove('selected');}else{S.selectedAgents.add(id);chip.classList.add('selected');}}
-function selectAllAgents(){const chips=el('agentTemplatesContainer').querySelectorAll('.agent-chip');chips.forEach(c=>{const id=c.querySelector('.font-mono')?.textContent;if(id){S.selectedAgents.add(id);c.classList.add('selected');}});}
+function selectAllAgents(){el('agentTemplatesContainer').querySelectorAll('.agent-chip').forEach(c=>{const id=c.querySelector('.font-mono')?.textContent;if(id){S.selectedAgents.add(id);c.classList.add('selected');}});}
 function deselectAllAgents(){S.selectedAgents.clear();el('agentTemplatesContainer').querySelectorAll('.agent-chip').forEach(c=>c.classList.remove('selected'));}
 function assignToSelected(){
   if(!S.selectedAgents.size)return toast('Sélectionnez des agents','error');
-  if(!S.models.length){loadModels();return toast('Chargement des modèles...','info');}
+  if(!S.models.length){api('apiAdminListShiftModeles',S.token).then(r=>{S.models=r.modeles||[];assignToSelected();});return;}
   const opts=S.models.map(m=>`<option value="${esc(m.idModele)}">${esc(m.nom)} (${fmtTime(m.heureDebut)}-${fmtTime(m.heureFin)})</option>`).join('');
-  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Planifier ${S.selectedAgents.size} agents</h3>
-    <div class="space-y-3">
-      <div><label class="text-xs text-on-surface-var mb-1 block">Modèle à appliquer</label><select id="batchModel" class="input-field">${opts}</select></div>
-      <div><label class="text-xs text-on-surface-var mb-1 block">Semaine (lundi)</label><input id="batchWeek" type="date" class="input-field" value="${isoDate(S.adminPlanWeek)}"></div>
-      <div class="text-xs text-on-surface-var">Agents: ${[...S.selectedAgents].join(', ')}</div>
-      <button onclick="doBatchAssign()" class="btn-primary w-full">Appliquer</button>
-    </div>`);
+  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Planifier ${S.selectedAgents.size} agents</h3><div class="space-y-3">
+    <div><label class="text-xs text-on-surface-var mb-1 block">Modèle</label><select id="batchModel" class="input-field">${opts}</select></div>
+    <div><label class="text-xs text-on-surface-var mb-1 block">Semaine (lundi)</label><input id="batchWeek" type="date" class="input-field" value="${isoDate(S.adminPlanWeek)}"></div>
+    <div class="text-xs text-on-surface-var">Agents: ${[...S.selectedAgents].join(', ')}</div>
+    <button onclick="doBatchAssign()" class="btn-primary w-full">Appliquer</button></div>`);
 }
-async function doBatchAssign(){
-  const idModele=el('batchModel')?.value,cibleLundi=el('batchWeek')?.value;
-  for(const uid of S.selectedAgents){
-    try{await api('apiAdminBulkShifts',S.token,{operation:'applyModel',idModele,cibleLundi,userId:uid});}catch(e){toast(`Erreur ${uid}: ${e.message}`,'error');}
-  }
-  toast('Planning appliqué','success');closeModal();loadAdminPlanning();
-}
+async function doBatchAssign(){const idModele=el('batchModel')?.value,w=el('batchWeek')?.value;let ok=0;for(const uid of S.selectedAgents){try{await api('apiAdminBulkShifts',S.token,{operation:'applyModel',idModele,cibleLundi:w,userId:uid});ok++;}catch(e){toast(`${uid}: ${e.message}`,'error');}}toast(`${ok} agents planifiés`,'success');closeModal();loadAdminPlanning();}
 
 /* Admin Swaps */
-async function loadAdminSwaps(){
-  try{const r=await api('apiListShiftSwapRequests',S.token,{});const items=r.items||[];
-    if(!items.length){el('adminSwapContainer').innerHTML='<div class="text-center text-on-surface-var py-4">Aucune demande</div>';return;}
-    el('adminSwapContainer').innerHTML=items.map(s=>renderSwapCard(s,true)).join('');
-  }catch(e){}
-}
-async function processSwap(id,action){
-  const comment=action==='reject'?prompt('Commentaire (optionnel):'):'';
-  try{await api('apiAdminProcessShiftSwap',S.token,{idSwap:id,action,adminComment:comment||''});toast('Échange traité','success');loadAdminSwaps();}catch(e){toast(e.message,'error');}
-}
+async function loadAdminSwaps(){try{const r=await api('apiListShiftSwapRequests',S.token,{});const items=r.items||[];if(!items.length){el('adminSwapContainer').innerHTML='<div class="text-center text-on-surface-var py-4">Aucune demande</div>';return;}el('adminSwapContainer').innerHTML=items.map(s=>renderSwapCard(s,true)).join('');}catch(e){}}
+async function processSwap(id,action){try{await api('apiAdminProcessShiftSwap',S.token,{idSwap:id,action,adminComment:''});toast('Traité','success');loadAdminSwaps();}catch(e){toast(e.message,'error');}}
+function showRejectSwapModal(id){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Refuser l'échange</h3><div class="space-y-3">
+  <div><label class="text-xs text-on-surface-var mb-1 block">Motif du refus</label><textarea id="rejectSwapComment" class="input-field" rows="3" placeholder="Expliquez le motif..."></textarea></div>
+  <button onclick="doRejectSwap('${esc(id)}')" class="btn-danger w-full">Refuser</button></div>`);}
+async function doRejectSwap(id){try{await api('apiAdminProcessShiftSwap',S.token,{idSwap:id,action:'reject',adminComment:el('rejectSwapComment')?.value||''});toast('Refusé','success');closeModal();loadAdminSwaps();}catch(e){toast(e.message,'error');}}
 
 /* Presence */
-async function loadPresence(){
-  const equipe=el('presenceTeamFilter')?.value;
-  try{const r=await api('apiGetPresenceOverview',S.token,{date:isoDate(new Date()),equipe});
-    const agents=r.overview||[];const stats=r.stats||{};
-    el('presenceKpis').innerHTML=[{l:'Présents',v:stats.presents||0,c:'text-tertiary',i:'check_circle'},{l:'En retard',v:stats.absents||0,c:'text-error',i:'warning'},{l:'Congé',v:stats.enConge||0,c:'text-secondary',i:'beach_access'},{l:'Non planifié',v:stats.nonPlanifie||0,c:'text-on-surface-var',i:'event_busy'}]
-      .map(k=>`<div class="glass-sm p-4 kpi-card ${k.c}"><span class="material-symbols-outlined text-lg mb-1">${k.i}</span><div class="text-xl font-headline font-bold">${k.v}</div><div class="text-[11px] text-on-surface-var">${k.l}</div></div>`).join('');
-    if(!agents.length){el('presenceCards').innerHTML='<div class="col-span-full text-center text-on-surface-var py-6">Aucun agent</div>';return;}
-    el('presenceCards').innerHTML=agents.map(a=>{
-      const sc={'Présent':'border-tertiary/30 bg-tertiary/5','En retard':'border-primary/30 bg-primary/5','Absent':'border-error/30 bg-error/5','Congé':'border-secondary/30 bg-secondary/5','Non planifié':'border-outline-var/30','OFF':'border-outline-var/30'};
-      const dc={'Présent':'bg-tertiary','En retard':'bg-primary','Absent':'bg-error','Congé':'bg-secondary','Non planifié':'bg-outline-var','OFF':'bg-outline-var'};
-      const ptg=a.pointage||{};const shift=a.shift||{};
-      return`<div class="glass-sm p-4 border ${sc[a.statut]||''}"><div class="flex items-center gap-3 mb-2">
-        <span class="presence-dot ${dc[a.statut]||'bg-outline-var'}"></span><span class="font-medium text-sm">${esc(a.nomAgent||a.userId)}</span>
-        <span class="text-[11px] text-on-surface-var ml-auto">${esc(a.equipe||'')}</span></div>
-        <div class="text-xs text-on-surface-var">${a.details||''} ${ptg.heureArrivee?'Arr: '+fmtTime(ptg.heureArrivee):''} ${ptg.heureDepart?'Dép: '+fmtTime(ptg.heureDepart):''} ${ptg.retardMinutes?`<span class="text-error">(${ptg.retardMinutes}min retard)</span>`:''}</div></div>`;
-    }).join('');
-  }catch(e){toast(e.message,'error');}
-}
+async function loadPresence(){const equipe=el('presenceTeamFilter')?.value;try{const r=await api('apiGetPresenceOverview',S.token,{date:isoDate(new Date()),equipe});const agents=r.overview||[];const stats=r.stats||{};
+  el('presenceKpis').innerHTML=[{l:'Présents',v:stats.presents||0,c:'text-tertiary',i:'check_circle'},{l:'Absents',v:stats.absents||0,c:'text-error',i:'cancel'},{l:'Congé',v:stats.enConge||0,c:'text-secondary',i:'beach_access'},{l:'Non planifié',v:stats.nonPlanifie||0,c:'text-on-surface-var',i:'event_busy'}].map(k=>`<div class="glass-sm p-4 kpi-card ${k.c}"><span class="material-symbols-outlined text-lg mb-1">${k.i}</span><div class="text-xl font-headline font-bold">${k.v}</div><div class="text-[11px] text-on-surface-var">${k.l}</div></div>`).join('');
+  if(!agents.length){el('presenceCards').innerHTML='<div class="col-span-full text-center text-on-surface-var py-6">Aucun agent</div>';return;}
+  el('presenceCards').innerHTML=agents.map(a=>{const sc={'Présent':'border-tertiary/30 bg-tertiary/5','En retard':'border-primary/30 bg-primary/5','Absent':'border-error/30 bg-error/5','Congé':'border-secondary/30 bg-secondary/5'};const dc={'Présent':'bg-tertiary','En retard':'bg-primary','Absent':'bg-error','Congé':'bg-secondary'};const ptg=a.pointage||{};
+    return`<div class="glass-sm p-4 border ${sc[a.statut]||''}"><div class="flex items-center gap-3 mb-2"><span class="presence-dot ${dc[a.statut]||'bg-outline-var'}"></span><span class="font-medium text-sm">${esc(a.nomAgent||a.userId)}</span><span class="text-[11px] text-on-surface-var ml-auto">${esc(a.equipe||'')}</span></div>
+      <div class="text-xs text-on-surface-var">${a.details||''} ${ptg.heureArrivee?'Arr: '+fmtTime(ptg.heureArrivee):''} ${ptg.heureDepart?'Dép: '+fmtTime(ptg.heureDepart):''} ${ptg.retardMinutes?`<span class="text-error">(${ptg.retardMinutes}min)</span>`:''}</div></div>`;}).join('');
+}catch(e){toast(e.message,'error');}}
 
 
 /* =========== POINTAGE =========== */
 async function doQuickClockIn(){try{await api('apiPointageClockIn',S.token,{});toast('Arrivée enregistrée','success');}catch(e){toast(e.message,'error');}}
 async function doQuickClockOut(){try{await api('apiPointageClockOut',S.token,{});toast('Départ enregistré','success');}catch(e){toast(e.message,'error');}}
-
-async function loadMyPointage(){
-  const df=el('myPtgDateFrom')?.value,dt=el('myPtgDateTo')?.value;
-  const f={};if(df)f.dateDebut=df;if(dt)f.dateFin=dt;
+async function loadMyPointage(){const df=el('myPtgDateFrom')?.value,dt=el('myPtgDateTo')?.value;const f={};if(df)f.dateDebut=df;if(dt)f.dateFin=dt;
   try{const r=await api('apiGetMyPointage',S.token,f);const items=r.items||[];
-    el('myPtgStats').innerHTML=[
-      {l:'Jours',v:items.length,i:'event_available',c:'text-primary'},
-      {l:'H. Sup',v:(r.totalHeuresSup||items.reduce((a,p)=>a+(parseFloat(p.heuresSup)||0),0)).toFixed?.(1)||'0'+'h',i:'more_time',c:'text-primary'},
-      {l:'Retard total',v:(r.totalRetards||items.reduce((a,p)=>a+(parseInt(p.retardMinutes)||0),0))+'min',i:'timer_off',c:'text-error'},
-      {l:'Aujourd\'hui',v:r.todayPointage?fmtTime(r.todayPointage.heureArrivee)||'—':'—',i:'today',c:'text-tertiary'}
-    ].map(k=>`<div class="glass-sm p-4 kpi-card ${k.c}"><span class="material-symbols-outlined text-lg mb-1">${k.i}</span><div class="text-xl font-headline font-bold">${k.v}</div><div class="text-[11px] text-on-surface-var">${k.l}</div></div>`).join('');
+    const hSup=r.totalHeuresSup||items.reduce((a,p)=>a+(parseFloat(p.heuresSup)||0),0);const ret=r.totalRetards||items.reduce((a,p)=>a+(parseInt(p.retardMinutes)||0),0);
+    el('myPtgStats').innerHTML=[{l:'Jours',v:items.length,i:'event_available',c:'text-primary'},{l:'H. Sup',v:(typeof hSup==='number'?hSup.toFixed(1):hSup)+'h',i:'more_time',c:'text-primary'},{l:'Retard',v:ret+'min',i:'timer_off',c:'text-error'},{l:'Aujourd\'hui',v:r.todayPointage?fmtTime(r.todayPointage.heureArrivee)||'—':'—',i:'today',c:'text-tertiary'}].map(k=>`<div class="glass-sm p-4 kpi-card ${k.c}"><span class="material-symbols-outlined text-lg mb-1">${k.i}</span><div class="text-xl font-headline font-bold">${k.v}</div><div class="text-[11px] text-on-surface-var">${k.l}</div></div>`).join('');
     if(!items.length){el('myPtgBody').innerHTML='<tr><td colspan="7" class="py-8 text-center text-on-surface-var">Aucun pointage</td></tr>';return;}
-    el('myPtgBody').innerHTML=items.map(p=>`<tr class="table-row border-b border-outline-var/10">
-      <td class="py-3 pr-4">${fmtDate(p.date)}</td><td class="py-3 pr-4">${fmtTime(p.heurePrevDebut)}-${fmtTime(p.heurePrevFin)}</td>
-      <td class="py-3 pr-4">${fmtTime(p.heureArrivee)||'—'}</td><td class="py-3 pr-4">${fmtTime(p.heureDepart)||'—'}</td>
-      <td class="py-3 pr-4">${p.dureeReelle||'—'}h</td><td class="py-3 pr-4 ${(p.retardMinutes||0)>0?'text-error':''}">${p.retardMinutes||0}min</td>
-      <td class="py-3 ${(p.heuresSup||0)>0?'text-primary':''}">${p.heuresSup||0}h</td></tr>`).join('');
-  }catch(e){toast(e.message,'error');}
-}
-
-async function loadAdminPointage(){
-  const equipe=el('adminPtgTeam')?.value,df=el('adminPtgDateFrom')?.value,dt=el('adminPtgDateTo')?.value;
-  const f={};if(equipe)f.equipe=equipe;if(df)f.dateDebut=df;if(dt)f.dateFin=dt;
+    el('myPtgBody').innerHTML=items.map(p=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4">${fmtDate(p.date)}</td><td class="py-3 pr-4">${fmtTime(p.heurePrevDebut)}-${fmtTime(p.heurePrevFin)}</td><td class="py-3 pr-4">${fmtTime(p.heureArrivee)||'—'}</td><td class="py-3 pr-4">${fmtTime(p.heureDepart)||'—'}</td><td class="py-3 pr-4">${p.dureeReelle||'—'}h</td><td class="py-3 pr-4 ${(p.retardMinutes||0)>0?'text-error':''}">${p.retardMinutes||0}min</td><td class="py-3 ${(p.heuresSup||0)>0?'text-primary':''}">${p.heuresSup||0}h</td></tr>`).join('');
+  }catch(e){toast(e.message,'error');}}
+async function loadAdminPointage(){const equipe=el('adminPtgTeam')?.value,df=el('adminPtgDateFrom')?.value,dt=el('adminPtgDateTo')?.value;const f={};if(equipe)f.equipe=equipe;if(df)f.dateDebut=df;if(dt)f.dateFin=dt;
   try{const r=await api('apiAdminListPointage',S.token,f);const items=r.items||[];
     if(!items.length){el('adminPtgBody').innerHTML='<tr><td colspan="9" class="py-8 text-center text-on-surface-var">Aucun pointage</td></tr>';return;}
-    el('adminPtgBody').innerHTML=items.map(p=>`<tr class="table-row border-b border-outline-var/10">
-      <td class="py-3 pr-4">${esc(p.nomAgent)}</td><td class="py-3 pr-4">${esc(p.equipe)}</td><td class="py-3 pr-4">${fmtDate(p.date)}</td>
-      <td class="py-3 pr-4">${fmtTime(p.heurePrevDebut)}-${fmtTime(p.heurePrevFin)}</td>
-      <td class="py-3 pr-4">${fmtTime(p.heureArrivee)||'—'}</td><td class="py-3 pr-4">${fmtTime(p.heureDepart)||'—'}</td>
-      <td class="py-3 pr-4 ${(p.retardMinutes||0)>0?'text-error':''}">${p.retardMinutes||0}min</td>
-      <td class="py-3 pr-4">${statusBadge(p.statut||'—')}</td>
-      <td class="py-3"><button onclick="showAdjustPtgModal('${esc(p.idPointage)}')" class="text-primary text-xs hover:underline">Ajuster</button></td></tr>`).join('');
-  }catch(e){toast(e.message,'error');}
-}
+    el('adminPtgBody').innerHTML=items.map(p=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4">${esc(p.nomAgent)}</td><td class="py-3 pr-4">${esc(p.equipe)}</td><td class="py-3 pr-4">${fmtDate(p.date)}</td><td class="py-3 pr-4">${fmtTime(p.heurePrevDebut)}-${fmtTime(p.heurePrevFin)}</td><td class="py-3 pr-4">${fmtTime(p.heureArrivee)||'—'}</td><td class="py-3 pr-4">${fmtTime(p.heureDepart)||'—'}</td><td class="py-3 pr-4 ${(p.retardMinutes||0)>0?'text-error':''}">${p.retardMinutes||0}min</td><td class="py-3 pr-4">${statusBadge(p.statut||'—')}</td><td class="py-3"><button onclick="showAdjustPtgModal('${esc(p.idPointage)}')" class="text-primary text-xs hover:underline">Ajuster</button></td></tr>`).join('');
+  }catch(e){toast(e.message,'error');}}
 async function doRecalcPointage(){const df=el('adminPtgDateFrom')?.value;try{await api('apiAdminRecalculatePointage',S.token,{dateDebut:df});toast('Recalculé','success');loadAdminPointage();}catch(e){toast(e.message,'error');}}
-
-async function loadOvertime(){
-  const equipe=el('overtimeTeam')?.value,annee=parseInt(el('overtimeYear')?.value)||new Date().getFullYear();
-  const f={annee};if(equipe)f.equipe=equipe;
+async function loadOvertime(){const equipe=el('overtimeTeam')?.value,annee=parseInt(el('overtimeYear')?.value)||new Date().getFullYear();const f={annee};if(equipe)f.userId=equipe;
   try{const r=await api('apiGetOvertimeSummary',S.token,f);const items=r.summary||[];
     if(!items.length){el('overtimeBody').innerHTML='<tr><td colspan="7" class="py-8 text-center text-on-surface-var">Aucune donnée</td></tr>';return;}
-    el('overtimeBody').innerHTML=items.map(a=>`<tr class="table-row border-b border-outline-var/10">
-      <td class="py-3 pr-4">${esc(a.nomAgent||a.userId)}</td><td class="py-3 pr-4">${esc(a.equipe||'')}</td>
-      <td class="py-3 pr-4">${esc(a.mois||'')}</td><td class="py-3 pr-4">${a.nbJours||0}</td>
-      <td class="py-3 pr-4 ${(a.totalHSup||0)>0?'text-primary font-medium':''}">${a.totalHSup||0}h</td>
-      <td class="py-3 pr-4 ${(a.totalRetardMin||0)>0?'text-error':''}">${a.totalRetardMin||0}</td>
-      <td class="py-3">${a.nbRetards||0}</td></tr>`).join('');
-  }catch(e){toast(e.message,'error');}
-}
+    el('overtimeBody').innerHTML=items.map(a=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4">${esc(a.nomAgent||a.userId)}</td><td class="py-3 pr-4">${esc(a.equipe||'')}</td><td class="py-3 pr-4">${esc(a.mois||'')}</td><td class="py-3 pr-4">${a.nbJours||0}</td><td class="py-3 pr-4 ${(a.totalHSup||0)>0?'text-primary font-medium':''}">${a.totalHSup||0}h</td><td class="py-3 pr-4 ${(a.totalRetardMin||0)>0?'text-error':''}">${a.totalRetardMin||0}</td><td class="py-3">${a.nbRetards||0}</td></tr>`).join('');
+  }catch(e){toast(e.message,'error');}}
 
 /* =========== ADMIN =========== */
-async function loadValidation(){
-  const equipe=el('validationTeamFilter')?.value;const f={scope:'all',statut:'En attente'};if(equipe)f.equipe=equipe;
+async function loadValidation(){const equipe=el('validationTeamFilter')?.value;const f={scope:'all',statut:'En attente'};if(equipe)f.equipe=equipe;
   try{const r=await api('apiListLeaves',S.token,f);const items=r.items||[];
     if(!items.length){el('validationBody').innerHTML='<tr><td colspan="8" class="py-8 text-center text-on-surface-var">Aucune demande</td></tr>';return;}
-    el('validationBody').innerHTML=items.map(l=>`<tr class="table-row border-b border-outline-var/10">
-      <td class="py-3 pr-4">${esc(l.nomAgent)}</td><td class="py-3 pr-4">${esc(l.equipe)}</td><td class="py-3 pr-4">${esc(l.typeConge)}</td>
-      <td class="py-3 pr-4">${fmtDate(l.dateDebut)}</td><td class="py-3 pr-4">${fmtDate(l.dateFin)}</td><td class="py-3 pr-4">${l.nbJours||'—'}</td>
-      <td class="py-3 pr-4 text-xs max-w-[200px] truncate">${esc(l.motif||'')}</td>
-      <td class="py-3"><button onclick="processLeave('${esc(l.idDemande)}','Validé')" class="text-tertiary text-xs hover:underline mr-2">Valider</button>
-        <button onclick="processLeave('${esc(l.idDemande)}','Refusé')" class="text-error text-xs hover:underline mr-2">Refuser</button>
-        <button onclick="showLeaveDetail('${esc(l.idDemande)}')" class="text-primary text-xs hover:underline">Détail</button></td></tr>`).join('');
-  }catch(e){toast(e.message,'error');}
-}
-async function processLeave(id,decision){const c=decision==='Refusé'?(prompt('Motif du refus:')||''):'';try{await api('apiProcessLeave',S.token,{idDemande:id,decision,commentaireAdmin:c});toast('Traitée','success');loadValidation();}catch(e){toast(e.message,'error');}}
-async function showLeaveDetail(id){
-  try{const r=await api('apiGetLeaveDetails',S.token,id);const l=r.leave||r;
-    openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Détail demande</h3>
-      <div class="space-y-2 text-sm">
-        ${[['Agent',l.nomAgent],['Équipe',l.equipe],['Type',l.typeConge],['Début',fmtDate(l.dateDebut)],['Fin',fmtDate(l.dateFin)],['Jours',l.nbJours],['Demi-journée',l.demiJournee||'Non'],['Statut',l.statut],['Motif',l.motif],['Créé le',fmtDateTime(l.dateCreation)],['Commentaire admin',l.commentaireAdmin]].filter(([,v])=>v).map(([k,v])=>`<div class="flex justify-between"><span class="text-on-surface-var">${k}</span><span class="text-right max-w-[250px]">${k==='Statut'?statusBadge(v):esc(v)}</span></div>`).join('')}
-      </div>${l.statut==='En attente'?`<div class="flex gap-3 mt-5"><button onclick="processLeave('${esc(l.idDemande)}','Validé');closeModal()" class="btn-primary flex-1">Valider</button><button onclick="processLeave('${esc(l.idDemande)}','Refusé');closeModal()" class="btn-danger flex-1">Refuser</button></div>`:''}`);
-  }catch(e){toast(e.message,'error');}
-}
+    el('validationBody').innerHTML=items.map(l=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4">${esc(l.nomAgent)}</td><td class="py-3 pr-4">${esc(l.equipe)}</td><td class="py-3 pr-4">${esc(l.typeConge)}</td><td class="py-3 pr-4">${fmtDate(l.dateDebut)}</td><td class="py-3 pr-4">${fmtDate(l.dateFin)}</td><td class="py-3 pr-4">${l.nbJours||'—'}</td><td class="py-3 pr-4 text-xs max-w-[200px] truncate">${esc(l.motif||'')}</td>
+      <td class="py-3"><button onclick="processLeave('${esc(l.idDemande)}','validate')" class="text-tertiary text-xs hover:underline mr-2">Valider</button><button onclick="showRejectLeaveModal('${esc(l.idDemande)}')" class="text-error text-xs hover:underline mr-2">Refuser</button><button onclick="showLeaveDetail('${esc(l.idDemande)}')" class="text-primary text-xs hover:underline">Détail</button></td></tr>`).join('');
+  }catch(e){toast(e.message,'error');}}
 
-async function loadHistory(){
-  const action=el('historySearch')?.value||'';const f={};if(action)f.action=action;
+/* Fixed: use action='validate'/'reject' + commentaire, not decision */
+async function processLeave(id,action){try{await api('apiProcessLeave',S.token,{idDemande:id,action,commentaire:''});toast('Traitée','success');loadValidation();}catch(e){toast(e.message,'error');}}
+
+/* Themed rejection modal instead of prompt() */
+function showRejectLeaveModal(id){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Refuser la demande</h3><div class="space-y-3">
+  <div><label class="text-xs text-on-surface-var mb-1 block">Motif du refus</label><textarea id="rejectLeaveComment" class="input-field" rows="3" placeholder="Expliquez le motif du refus..."></textarea></div>
+  <div class="flex gap-3"><button onclick="doRejectLeave('${esc(id)}')" class="btn-danger flex-1">Confirmer le refus</button><button onclick="closeModal()" class="btn-ghost flex-1">Annuler</button></div></div>`);}
+async function doRejectLeave(id){try{await api('apiProcessLeave',S.token,{idDemande:id,action:'reject',commentaire:el('rejectLeaveComment')?.value||''});toast('Refusée','success');closeModal();loadValidation();}catch(e){toast(e.message,'error');}}
+
+/* Fixed: apiGetLeaveDetails returns r.item not r.leave */
+async function showLeaveDetail(id){
+  try{const r=await api('apiGetLeaveDetails',S.token,id);const l=r.item||r;const perms=r.permissions||{};
+    openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Détail demande</h3>
+      <div class="space-y-3 text-sm">
+        ${[['Agent',l.nomAgent],['Équipe',l.equipe],['Type',l.typeConge],['Début',fmtDate(l.dateDebut)],['Fin',fmtDate(l.dateFin)],['Jours',l.nbJours],['Demi-journée',l.demiJournee||'Non'],['Imputation',l.imputationSolde||'normal'],['Motif',l.motif],['Créé le',fmtDateTime(l.dateCreation)],['Traité le',fmtDateTime(l.dateTraitement)],['Admin',l.adminTraitant],['Commentaire',l.commentaireAdmin]].filter(([,v])=>v).map(([k,v])=>`<div class="flex justify-between py-1 border-b border-outline-var/10"><span class="text-on-surface-var">${k}</span><span class="text-right max-w-[250px]">${k==='Statut'?statusBadge(v):esc(v)}</span></div>`).join('')}
+        <div class="flex justify-between py-1"><span class="text-on-surface-var">Statut</span><span>${statusBadge(l.statut)}</span></div>
+      </div>
+      ${perms.canValidate?`<div class="flex gap-3 mt-5"><button onclick="processLeave('${esc(l.idDemande)}','validate');closeModal()" class="btn-primary flex-1">Valider</button><button onclick="closeModal();showRejectLeaveModal('${esc(l.idDemande)}')" class="btn-danger flex-1">Refuser</button></div>`:''}`);
+  }catch(e){toast(e.message,'error');}}
+
+async function loadHistory(){const action=el('historySearch')?.value||'';const f={};if(action)f.action=action;
   try{const r=await api('apiListHistory',S.token,f);const items=r.items||[];
     if(!items.length){el('historyBody').innerHTML='<tr><td colspan="5" class="py-8 text-center text-on-surface-var">Aucun historique</td></tr>';return;}
-    el('historyBody').innerHTML=items.slice(0,100).map(l=>`<tr class="table-row border-b border-outline-var/10">
-      <td class="py-3 pr-4 text-xs">${fmtDateTime(l.dateHeure)}</td><td class="py-3 pr-4">${esc(l.action)}</td>
-      <td class="py-3 pr-4">${esc(l.auteurUserId)}</td><td class="py-3 pr-4">${esc(l.cibleUserId||'—')}</td>
-      <td class="py-3 text-xs max-w-[300px] truncate">${esc(l.details||'')}</td></tr>`).join('');
-  }catch(e){toast(e.message,'error');}
-}
+    el('historyBody').innerHTML=items.slice(0,100).map(l=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4 text-xs">${fmtDateTime(l.dateHeure)}</td><td class="py-3 pr-4">${esc(l.action)}</td><td class="py-3 pr-4">${esc(l.auteurUserId)}</td><td class="py-3 pr-4">${esc(l.cibleUserId||'—')}</td><td class="py-3 text-xs max-w-[300px] truncate">${esc(l.details||'')}</td></tr>`).join('');
+  }catch(e){toast(e.message,'error');}}
 
-async function loadUsers(){
-  try{const r=await api('apiAdminListUsers',S.token);S.users=r.users||[];
-    if(!S.users.length){el('usersBody').innerHTML='<tr><td colspan="7" class="py-8 text-center text-on-surface-var">Aucun utilisateur</td></tr>';return;}
-    el('usersBody').innerHTML=S.users.map(u=>{
-      const bal=u.balance||{};
-      return`<tr class="table-row border-b border-outline-var/10">
-      <td class="py-3 pr-4 font-mono text-xs">${esc(u.userId)}</td><td class="py-3 pr-4">${esc(u.nomComplet)}</td>
-      <td class="py-3 pr-4">${u.role==='admin'?'<span class="badge badge-approved">Admin</span>':'<span class="badge badge-pending">Agent</span>'}</td>
-      <td class="py-3 pr-4">${esc(u.equipe||'—')}</td>
-      <td class="py-3 pr-4">${(u.actif==='Oui'||u.actif===true)?'<span class="text-tertiary">Oui</span>':'<span class="text-error">Non</span>'}</td>
-      <td class="py-3 pr-4"><button onclick="showBalanceModal('${esc(u.userId)}')" class="text-primary text-xs hover:underline">${bal.soldeRestant??'—'} / ${bal.soldeInitial??'—'}</button></td>
-      <td class="py-3"><button onclick="showUserModal('${esc(u.userId)}')" class="text-primary text-xs hover:underline">Modifier</button></td></tr>`;}).join('');
-  }catch(e){toast(e.message,'error');}
-}
+async function loadUsers(){try{const r=await api('apiAdminListUsers',S.token);S.users=r.users||[];
+    if(!S.users.length){el('usersBody').innerHTML='<tr><td colspan="7" class="py-8 text-center text-on-surface-var">Aucun</td></tr>';return;}
+    el('usersBody').innerHTML=S.users.map(u=>{const b=u.balance||{};return`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4 font-mono text-xs">${esc(u.userId)}</td><td class="py-3 pr-4">${esc(u.nomComplet)}</td><td class="py-3 pr-4">${u.role==='admin'?'<span class="badge badge-approved">Admin</span>':'<span class="badge badge-pending">Agent</span>'}</td><td class="py-3 pr-4">${esc(u.equipe||'—')}</td><td class="py-3 pr-4">${(u.actif==='Oui'||u.actif===true)?'<span class="text-tertiary">Oui</span>':'<span class="text-error">Non</span>'}</td><td class="py-3 pr-4"><button onclick="showBalanceModal('${esc(u.userId)}')" class="text-primary text-xs hover:underline">${b.soldeRestant??'—'}/${b.soldeInitial??'—'} <span class="text-on-surface-var">(NC: ${b.soldeNonConsommeRestant??'—'})</span></button></td><td class="py-3"><button onclick="showUserModal('${esc(u.userId)}')" class="text-primary text-xs hover:underline">Modifier</button></td></tr>`;}).join('');
+  }catch(e){toast(e.message,'error');}}
 
-async function loadModels(){
-  try{const r=await api('apiAdminListShiftModeles',S.token);S.models=r.modeles||[];
-    if(!S.models.length){el('modelsBody').innerHTML='<tr><td colspan="6" class="py-8 text-center text-on-surface-var">Aucun modèle</td></tr>';return;}
-    el('modelsBody').innerHTML=S.models.map(m=>`<tr class="table-row border-b border-outline-var/10">
-      <td class="py-3 pr-4 font-medium">${esc(m.nom)}</td><td class="py-3 pr-4">${fmtTime(m.heureDebut)}</td><td class="py-3 pr-4">${fmtTime(m.heureFin)}</td>
-      <td class="py-3 pr-4"><div class="w-6 h-6 rounded" style="background:${m.couleur||'#888'}"></div></td>
-      <td class="py-3 pr-4">${(m.actif==='Oui'||m.actif===true)?'<span class="text-tertiary">Oui</span>':'<span class="text-error">Non</span>'}</td>
-      <td class="py-3"><button onclick="showModelModal('${esc(m.idModele)}')" class="text-primary text-xs hover:underline mr-2">Modifier</button><button onclick="deleteModel('${esc(m.idModele)}')" class="text-error text-xs hover:underline">Suppr</button></td></tr>`).join('');
-  }catch(e){toast(e.message,'error');}
-}
+async function loadModels(){try{const r=await api('apiAdminListShiftModeles',S.token);S.models=r.modeles||[];if(!S.models.length){el('modelsBody').innerHTML='<tr><td colspan="6" class="py-8 text-center text-on-surface-var">Aucun</td></tr>';return;}el('modelsBody').innerHTML=S.models.map(m=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4 font-medium">${esc(m.nom)}</td><td class="py-3 pr-4">${fmtTime(m.heureDebut)}</td><td class="py-3 pr-4">${fmtTime(m.heureFin)}</td><td class="py-3 pr-4"><div class="w-6 h-6 rounded" style="background:${m.couleur||'#888'}"></div></td><td class="py-3 pr-4">${(m.actif==='Oui'||m.actif===true||m.actif==='oui')?'<span class="text-tertiary">Oui</span>':'<span class="text-error">Non</span>'}</td><td class="py-3"><button onclick="showModelModal('${esc(m.idModele)}')" class="text-primary text-xs hover:underline mr-2">Modifier</button><button onclick="deleteModel('${esc(m.idModele)}')" class="text-error text-xs hover:underline">Suppr</button></td></tr>`).join('');}catch(e){toast(e.message,'error');}}
 async function deleteModel(id){if(!confirm('Supprimer ?'))return;try{await api('apiAdminDeleteShiftModele',S.token,id);toast('Supprimé','success');loadModels();}catch(e){toast(e.message,'error');}}
-
-async function loadPlages(){
-  try{const r=await api('apiAdminListPlagesHoraires',S.token,{});S.plages=r.plages||[];
-    if(!S.plages.length){el('plagesBody').innerHTML='<tr><td colspan="7" class="py-8 text-center text-on-surface-var">Aucune plage</td></tr>';return;}
-    el('plagesBody').innerHTML=S.plages.map(p=>`<tr class="table-row border-b border-outline-var/10">
-      <td class="py-3 pr-4 font-medium">${esc(p.nom)}</td><td class="py-3 pr-4">${esc(p.equipe||'—')}</td>
-      <td class="py-3 pr-4">${fmtTime(p.heureDebut)}-${fmtTime(p.heureFin)}</td><td class="py-3 pr-4">${esc(p.niveauFlux||'—')}</td>
-      <td class="py-3 pr-4">${p.effectifMin||'—'}</td>
-      <td class="py-3 pr-4">${(p.actif==='Oui'||p.actif===true)?'<span class="text-tertiary">Oui</span>':'<span class="text-error">Non</span>'}</td>
-      <td class="py-3"><button onclick="showPlageModal('${esc(p.idPlage)}')" class="text-primary text-xs hover:underline mr-2">Modifier</button><button onclick="deletePlage('${esc(p.idPlage)}')" class="text-error text-xs hover:underline">Suppr</button></td></tr>`).join('');
-  }catch(e){toast(e.message,'error');}
-}
+async function loadPlages(){try{const r=await api('apiAdminListPlagesHoraires',S.token,{});S.plages=r.plages||[];if(!S.plages.length){el('plagesBody').innerHTML='<tr><td colspan="7" class="py-8 text-center text-on-surface-var">Aucune</td></tr>';return;}el('plagesBody').innerHTML=S.plages.map(p=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4 font-medium">${esc(p.nom)}</td><td class="py-3 pr-4">${esc(p.equipe||'—')}</td><td class="py-3 pr-4">${fmtTime(p.heureDebut)}-${fmtTime(p.heureFin)}</td><td class="py-3 pr-4">${esc(p.niveauFlux||'—')}</td><td class="py-3 pr-4">${p.effectifMin||'—'}</td><td class="py-3 pr-4">${(p.actif==='Oui'||p.actif===true||p.actif==='oui')?'<span class="text-tertiary">Oui</span>':'<span class="text-error">Non</span>'}</td><td class="py-3"><button onclick="showPlageModal('${esc(p.idPlage)}')" class="text-primary text-xs hover:underline mr-2">Modifier</button><button onclick="deletePlage('${esc(p.idPlage)}')" class="text-error text-xs hover:underline">Suppr</button></td></tr>`).join('');}catch(e){toast(e.message,'error');}}
 async function deletePlage(id){if(!confirm('Supprimer ?'))return;try{await api('apiAdminDeletePlageHoraire',S.token,id);toast('Supprimée','success');loadPlages();}catch(e){toast(e.message,'error');}}
 
-/* Params - returns flat object, not array */
-async function loadParams(){
-  try{const r=await api('apiAdminGetParams',S.token);const p=r.params||{};
-    const labels={maxAbsentsParEquipe:'Max absents/équipe',delaiMinAvantConge:'Délai min avant congé (j)',typesCongesAutorises:'Types congés autorisés',vueEquipeAgents:'Vue équipe agents',accrualMensuelJours:'Crédit mensuel (jours)',modeleMailConge:'Modèle mail congé'};
-    el('paramsContainer').innerHTML=Object.keys(p).map(k=>`<div class="flex items-center gap-4">
-      <label class="text-sm font-medium w-64 shrink-0">${esc(labels[k]||k)}</label>
-      ${k==='modeleMailConge'?`<textarea class="input-field param-input" data-key="${esc(k)}" rows="3">${esc(p[k]||'')}</textarea>`:`<input class="input-field param-input" data-key="${esc(k)}" value="${esc(p[k]||'')}">`}
-    </div>`).join('');
-  }catch(e){toast(e.message,'error');}
-}
-async function saveParams(){
-  const p={};document.querySelectorAll('.param-input').forEach(i=>p[i.dataset.key]=i.value);
-  try{await api('apiAdminSaveParams',S.token,p);toast('Enregistré','success');}catch(e){toast(e.message,'error');}
-}
+/* Params - flat object */
+async function loadParams(){try{const r=await api('apiAdminGetParams',S.token);const p=r.params||{};const labels={maxAbsentsParEquipe:'Max absents/équipe',delaiMinAvantConge:'Délai min avant congé (j)',typesCongesAutorises:'Types congés autorisés',vueEquipeAgents:'Vue équipe agents',accrualMensuelJours:'Crédit mensuel (jours)',modeleMailConge:'Modèle mail congé'};
+  el('paramsContainer').innerHTML=Object.keys(p).map(k=>`<div class="flex items-center gap-4"><label class="text-sm font-medium w-64 shrink-0">${esc(labels[k]||k)}</label>${k==='modeleMailConge'?`<textarea class="input-field param-input" data-key="${esc(k)}" rows="3">${esc(p[k]||'')}</textarea>`:`<input class="input-field param-input" data-key="${esc(k)}" value="${esc(p[k]||'')}">`}</div>`).join('');}catch(e){toast(e.message,'error');}}
+async function saveParams(){const p={};document.querySelectorAll('.param-input').forEach(i=>p[i.dataset.key]=i.value);try{await api('apiAdminSaveParams',S.token,p);toast('Enregistré','success');}catch(e){toast(e.message,'error');}}
 
-/* Holidays - items not holidays */
-async function loadHolidays(){
-  try{const r=await api('apiAdminListHolidays',S.token);const items=r.items||[];
-    if(!items.length){el('holidaysBody').innerHTML='<tr><td colspan="3" class="py-8 text-center text-on-surface-var">Aucun jour férié</td></tr>';return;}
-    el('holidaysBody').innerHTML=items.map(h=>`<tr class="table-row border-b border-outline-var/10">
-      <td class="py-3 pr-4">${fmtDate(h.date)}</td><td class="py-3 pr-4">${esc(h.libelle)}</td>
-      <td class="py-3"><button onclick="deleteHoliday('${esc(h.date)}')" class="text-error text-xs hover:underline">Supprimer</button></td></tr>`).join('');
-  }catch(e){toast(e.message,'error');}
-}
+/* Holidays - items */
+async function loadHolidays(){try{const r=await api('apiAdminListHolidays',S.token);const items=r.items||[];if(!items.length){el('holidaysBody').innerHTML='<tr><td colspan="3" class="py-8 text-center text-on-surface-var">Aucun</td></tr>';return;}el('holidaysBody').innerHTML=items.map(h=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4">${fmtDate(h.date)}</td><td class="py-3 pr-4">${esc(h.libelle)}</td><td class="py-3"><button onclick="deleteHoliday('${esc(h.date)}')" class="text-error text-xs hover:underline">Suppr</button></td></tr>`).join('');}catch(e){toast(e.message,'error');}}
 async function deleteHoliday(d){if(!confirm('Supprimer ?'))return;try{await api('apiAdminDeleteHoliday',S.token,d);toast('Supprimé','success');loadHolidays();}catch(e){toast(e.message,'error');}}
 
-async function loadDashboard(){
-  try{const r=await api('apiGetDashboard',S.token);const c=r.cards||{};
-    el('dashKpis').innerHTML=[{l:'En attente',v:c.pending||0,i:'hourglass_empty',c:'text-primary'},{l:'Validées',v:c.approved||0,i:'check_circle',c:'text-tertiary'},{l:'Refusées',v:c.rejected||0,i:'cancel',c:'text-error'},{l:'Délai moyen',v:(c.avgProcessingHours||0)+'h',i:'timer',c:'text-secondary'}]
-      .map(k=>`<div class="glass p-5 kpi-card ${k.c}"><span class="material-symbols-outlined text-2xl mb-2">${k.i}</span><div class="text-2xl font-headline font-bold">${k.v}</div><div class="text-xs text-on-surface-var">${k.l}</div></div>`).join('');
-    const byType=r.byType||[],totT=byType.reduce((a,t)=>a+t.count,0)||1;
-    el('dashByType').innerHTML=byType.map(t=>`<div><div class="flex justify-between text-sm mb-1"><span>${esc(t.type)}</span><span class="text-on-surface-var">${t.count}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${Math.round(t.count/totT*100)}%"></div></div></div>`).join('')||'<div class="text-on-surface-var text-sm">—</div>';
-    el('dashByTeam').innerHTML=(r.byTeamPending||[]).map(t=>`<div class="flex justify-between items-center glass-sm p-3"><span class="text-sm font-medium">${esc(t.equipe)}</span><span class="badge badge-pending">${t.count}</span></div>`).join('')||'<div class="text-on-surface-var text-sm">—</div>';
-  }catch(e){toast(e.message,'error');}
-}
-async function loadTeamRules(){
-  try{const r=await api('apiAdminListTeamRules',S.token);const rules=r.rules||[];
-    if(!rules.length){el('teamRulesBody').innerHTML='<tr><td colspan="7" class="py-8 text-center text-on-surface-var">Aucune règle</td></tr>';return;}
-    el('teamRulesBody').innerHTML=rules.map(r=>`<tr class="table-row border-b border-outline-var/10">
-      <td class="py-3 pr-4 font-medium">${esc(r.equipe)}</td><td class="py-3 pr-4">${r.maxDemandesParJour||'—'}</td>
-      <td class="py-3 pr-4">${r.delaiMinAvantCongeJours||'—'}</td><td class="py-3 pr-4">${r.maxAbsentsParJour||'—'}</td>
-      <td class="py-3 pr-4">${r.heureLimiteDepot||'—'}</td>
-      <td class="py-3 pr-4">${(r.actif==='Oui'||r.actif===true)?'<span class="text-tertiary">Oui</span>':'<span class="text-error">Non</span>'}</td>
-      <td class="py-3"><button onclick="showTeamRuleModal('${esc(r.equipe)}')" class="text-primary text-xs hover:underline mr-2">Modifier</button><button onclick="deleteTeamRule('${esc(r.equipe)}')" class="text-error text-xs hover:underline">Suppr</button></td></tr>`).join('');
-  }catch(e){}
-}
-async function deleteTeamRule(e){if(!confirm('Supprimer ?'))return;try{await api('apiAdminDeleteTeamRule',S.token,e);toast('Supprimée','success');loadTeamRules();}catch(e){toast(e.message,'error');}}
+async function loadDashboard(){try{const r=await api('apiGetDashboard',S.token);const c=r.cards||{};
+  el('dashKpis').innerHTML=[{l:'En attente',v:c.pending||0,i:'hourglass_empty',c:'text-primary'},{l:'Validées',v:c.approved||0,i:'check_circle',c:'text-tertiary'},{l:'Refusées',v:c.rejected||0,i:'cancel',c:'text-error'},{l:'Délai moyen',v:(c.avgProcessingHours||0)+'h',i:'timer',c:'text-secondary'}].map(k=>`<div class="glass p-5 kpi-card ${k.c}"><span class="material-symbols-outlined text-2xl mb-2">${k.i}</span><div class="text-2xl font-headline font-bold">${k.v}</div><div class="text-xs text-on-surface-var">${k.l}</div></div>`).join('');
+  const byType=r.byType||[],totT=byType.reduce((a,t)=>a+t.count,0)||1;
+  el('dashByType').innerHTML=byType.map(t=>`<div><div class="flex justify-between text-sm mb-1"><span>${esc(t.type)}</span><span class="text-on-surface-var">${t.count}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${Math.round(t.count/totT*100)}%"></div></div></div>`).join('')||'<div class="text-on-surface-var text-sm">—</div>';
+  el('dashByTeam').innerHTML=(r.byTeamPending||[]).map(t=>`<div class="flex justify-between items-center glass-sm p-3"><span class="text-sm font-medium">${esc(t.equipe)}</span><span class="badge badge-pending">${t.count}</span></div>`).join('')||'<div class="text-on-surface-var text-sm">—</div>';
+}catch(e){toast(e.message,'error');}}
+
+/* Fixed: team rules uses items not rules */
+async function loadTeamRules(){try{const r=await api('apiAdminListTeamRules',S.token);const rules=r.items||[];
+  if(!rules.length){el('teamRulesBody').innerHTML='<tr><td colspan="7" class="py-8 text-center text-on-surface-var">Aucune règle</td></tr>';return;}
+  el('teamRulesBody').innerHTML=rules.map(r=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4 font-medium">${esc(r.equipe)}</td><td class="py-3 pr-4">${r.maxDemandesParJour||'—'}</td><td class="py-3 pr-4">${r.delaiMinAvantCongeJours||'—'}</td><td class="py-3 pr-4">${r.maxAbsentsParJour||'—'}</td><td class="py-3 pr-4">${r.heureLimiteDepot||'—'}</td><td class="py-3 pr-4">${(r.actif==='Oui'||r.actif===true||r.actif==='oui')?'<span class="text-tertiary">Oui</span>':'<span class="text-error">Non</span>'}</td><td class="py-3"><button onclick="showTeamRuleModal('${esc(r.equipe)}')" class="text-primary text-xs hover:underline mr-2">Modifier</button><button onclick="deleteTeamRule('${esc(r.equipe)}')" class="text-error text-xs hover:underline">Suppr</button></td></tr>`).join('');
+}catch(e){}}
+async function deleteTeamRule(e){if(!confirm('Supprimer ?'))return;try{await api('apiAdminDeleteTeamRule',S.token,e);toast('Supprimée','success');loadTeamRules();}catch(e2){toast(e2.message,'error');}}
 
 
 /* =========== MODALS =========== */
 function openModal(h){el('modalBox').innerHTML=`<button onclick="closeModal()" class="absolute top-4 right-4 text-on-surface-var hover:text-on-surface"><span class="material-symbols-outlined">close</span></button>`+h;el('modalOverlay').style.display='flex';}
 function closeModal(){el('modalOverlay').style.display='none';}
 
-function showPasswordModal(){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Changer mot de passe</h3><div class="space-y-3">
-  <div><label class="text-xs text-on-surface-var mb-1 block">Actuel</label><input id="pwCur" type="password" class="input-field"></div>
-  <div><label class="text-xs text-on-surface-var mb-1 block">Nouveau</label><input id="pwNew" type="password" class="input-field"></div>
-  <div><label class="text-xs text-on-surface-var mb-1 block">Confirmer</label><input id="pwCf" type="password" class="input-field"></div>
-  <button onclick="doChangePw()" class="btn-primary w-full">Changer</button></div>`);}
-async function doChangePw(){const c=el('pwCur').value,n=el('pwNew').value,f=el('pwCf').value;if(!c||!n)return toast('Champs requis','error');if(n!==f)return toast('Non identiques','error');try{await api('apiChangePassword',S.token,c,n);toast('Changé','success');closeModal();}catch(e){toast(e.message,'error');}}
+function showPasswordModal(){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Changer mot de passe</h3><div class="space-y-3"><div><label class="text-xs text-on-surface-var mb-1 block">Actuel</label><input id="pwCur" type="password" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Nouveau</label><input id="pwNew" type="password" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Confirmer</label><input id="pwCf" type="password" class="input-field"></div><button onclick="doChangePw()" class="btn-primary w-full">Changer</button></div>`);}
+async function doChangePw(){const c=el('pwCur').value,n=el('pwNew').value,f=el('pwCf').value;if(!c||!n)return toast('Requis','error');if(n!==f)return toast('Non identiques','error');try{await api('apiChangePassword',S.token,c,n);toast('Changé','success');closeModal();}catch(e){toast(e.message,'error');}}
 
-function showUserModal(uid){const u=uid?S.users.find(x=>x.userId===uid):null;
-  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">${u?'Modifier':'Nouvel'} utilisateur</h3><div class="space-y-3">
-    <div><label class="text-xs text-on-surface-var mb-1 block">ID</label><input id="muId" class="input-field" value="${esc(u?.userId||'')}" ${u?'readonly':''}></div>
-    <div><label class="text-xs text-on-surface-var mb-1 block">Nom</label><input id="muNom" class="input-field" value="${esc(u?.nomComplet||'')}"></div>
-    <div><label class="text-xs text-on-surface-var mb-1 block">Rôle</label><select id="muRole" class="input-field"><option value="agent" ${u?.role==='agent'?'selected':''}>Agent</option><option value="admin" ${u?.role==='admin'?'selected':''}>Admin</option></select></div>
-    <div><label class="text-xs text-on-surface-var mb-1 block">Équipe</label><input id="muEq" class="input-field" value="${esc(u?.equipe||'')}"></div>
-    <div><label class="text-xs text-on-surface-var mb-1 block">Actif</label><select id="muAct" class="input-field"><option value="Oui" ${(!u||u.actif==='Oui'||u.actif===true)?'selected':''}>Oui</option><option value="Non" ${(u?.actif==='Non'||u?.actif===false)?'selected':''}>Non</option></select></div>
-    ${!u?'<div><label class="text-xs text-on-surface-var mb-1 block">Mot de passe</label><input id="muPw" type="password" class="input-field"></div>':''}
-    <button onclick="saveUser(${u?'true':'false'})" class="btn-primary w-full">Enregistrer</button></div>`);}
+function showUserModal(uid){const u=uid?S.users.find(x=>x.userId===uid):null;openModal(`<h3 class="font-headline font-semibold text-lg mb-4">${u?'Modifier':'Nouvel'} utilisateur</h3><div class="space-y-3"><div><label class="text-xs text-on-surface-var mb-1 block">ID</label><input id="muId" class="input-field" value="${esc(u?.userId||'')}" ${u?'readonly':''}></div><div><label class="text-xs text-on-surface-var mb-1 block">Nom</label><input id="muNom" class="input-field" value="${esc(u?.nomComplet||'')}"></div><div><label class="text-xs text-on-surface-var mb-1 block">Rôle</label><select id="muRole" class="input-field"><option value="agent" ${u?.role==='agent'?'selected':''}>Agent</option><option value="admin" ${u?.role==='admin'?'selected':''}>Admin</option></select></div><div><label class="text-xs text-on-surface-var mb-1 block">Équipe</label><input id="muEq" class="input-field" value="${esc(u?.equipe||'')}"></div><div><label class="text-xs text-on-surface-var mb-1 block">Actif</label><select id="muAct" class="input-field"><option value="Oui" ${(!u||u.actif==='Oui'||u.actif===true)?'selected':''}>Oui</option><option value="Non" ${(u?.actif==='Non'||u?.actif===false)?'selected':''}>Non</option></select></div>${!u?'<div><label class="text-xs text-on-surface-var mb-1 block">Mot de passe</label><input id="muPw" type="password" class="input-field"></div>':''}<button onclick="saveUser(${u?'true':'false'})" class="btn-primary w-full">Enregistrer</button></div>`);}
 async function saveUser(edit){const p={userId:el('muId').value.trim().toUpperCase(),nomComplet:el('muNom').value.trim(),role:el('muRole').value,equipe:el('muEq').value.trim(),actif:el('muAct').value};if(!edit&&el('muPw'))p.password=el('muPw').value;if(!p.userId||!p.nomComplet)return toast('ID et nom requis','error');try{await api('apiAdminSaveUser',S.token,p);toast('Enregistré','success');closeModal();loadUsers();}catch(e){toast(e.message,'error');}}
 
-function showResetPwModal(){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Reset MdP en masse</h3><div class="space-y-3">
-  <div><label class="text-xs text-on-surface-var mb-1 block">IDs (virgule)</label><textarea id="rpIds" class="input-field" rows="3" placeholder="ID1, ID2..."></textarea></div>
-  <div><label class="text-xs text-on-surface-var mb-1 block">Nouveau MdP</label><input id="rpPw" type="password" class="input-field"></div>
-  <button onclick="doResetPw()" class="btn-danger w-full">Réinitialiser</button></div>`);}
-async function doResetPw(){const ids=el('rpIds').value.split(',').map(s=>s.trim().toUpperCase()).filter(Boolean),pw=el('rpPw').value;if(!ids.length||!pw)return toast('Requis','error');try{await api('apiAdminResetPasswordsBulk',S.token,{userIds:ids,newPassword:pw});toast('Réinitialisés','success');closeModal();}catch(e){toast(e.message,'error');}}
+function showResetPwModal(){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Reset MdP</h3><div class="space-y-3"><div><label class="text-xs text-on-surface-var mb-1 block">IDs (virgule)</label><textarea id="rpIds" class="input-field" rows="3"></textarea></div><div><label class="text-xs text-on-surface-var mb-1 block">Nouveau MdP</label><input id="rpPw" type="password" class="input-field"></div><button onclick="doResetPw()" class="btn-danger w-full">Réinitialiser</button></div>`);}
+async function doResetPw(){const ids=el('rpIds').value.split(',').map(s=>s.trim().toUpperCase()).filter(Boolean),pw=el('rpPw').value;if(!ids.length||!pw)return toast('Requis','error');try{await api('apiAdminResetPasswordsBulk',S.token,{userIds:ids,newPassword:pw});toast('OK','success');closeModal();}catch(e){toast(e.message,'error');}}
 
-function showBalanceModal(uid){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Solde — ${esc(uid)}</h3><div class="space-y-3">
-  <div><label class="text-xs text-on-surface-var mb-1 block">Année</label><input id="blY" type="number" class="input-field" value="${new Date().getFullYear()}"></div>
-  <div><label class="text-xs text-on-surface-var mb-1 block">Solde initial</label><input id="blI" type="number" step="0.5" class="input-field" value="0"></div>
-  <div><label class="text-xs text-on-surface-var mb-1 block">Non-consommé initial</label><input id="blN" type="number" step="0.5" class="input-field" value="0"></div>
-  <button onclick="doSetBal('${esc(uid)}')" class="btn-primary w-full">Enregistrer</button></div>`);}
+function showBalanceModal(uid){const u=S.users.find(x=>x.userId===uid);const b=u?.balance||{};
+  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Solde — ${esc(uid)}</h3>
+    <div class="glass-sm p-4 mb-4"><div class="text-xs text-on-surface-var mb-2 font-semibold uppercase">Solde actuel</div>
+      <div class="grid grid-cols-3 gap-3 text-center text-sm">
+        <div><div class="text-on-surface-var text-[10px]">Initial</div><div class="font-bold">${b.soldeInitial??'—'}</div></div>
+        <div><div class="text-on-surface-var text-[10px]">Pris</div><div class="font-bold text-error">${b.congesPris??'—'}</div></div>
+        <div><div class="text-on-surface-var text-[10px]">Restant</div><div class="font-bold text-tertiary">${b.soldeRestant??'—'}</div></div>
+      </div>
+      <div class="text-xs text-on-surface-var mt-3 mb-1 font-semibold uppercase">Non consommé (N-1)</div>
+      <div class="grid grid-cols-3 gap-3 text-center text-sm">
+        <div><div class="text-on-surface-var text-[10px]">Initial</div><div class="font-bold">${b.soldeNonConsommeInitial??'—'}</div></div>
+        <div><div class="text-on-surface-var text-[10px]">Pris</div><div class="font-bold text-error">${b.congesNonConsommesPris??'—'}</div></div>
+        <div><div class="text-on-surface-var text-[10px]">Restant</div><div class="font-bold text-tertiary">${b.soldeNonConsommeRestant??'—'}</div></div>
+      </div>
+    </div>
+    <div class="space-y-3">
+      <div><label class="text-xs text-on-surface-var mb-1 block">Année</label><input id="blY" type="number" class="input-field" value="${new Date().getFullYear()}"></div>
+      <div><label class="text-xs text-on-surface-var mb-1 block">Solde initial (normal)</label><input id="blI" type="number" step="0.5" class="input-field" value="${b.soldeInitial||0}"></div>
+      <div><label class="text-xs text-on-surface-var mb-1 block">Solde initial (non consommé N-1)</label><input id="blN" type="number" step="0.5" class="input-field" value="${b.soldeNonConsommeInitial||0}"></div>
+      <button onclick="doSetBal('${esc(uid)}')" class="btn-primary w-full">Enregistrer</button>
+    </div>`);}
 async function doSetBal(uid){try{await api('apiAdminSetBalance',S.token,{userId:uid,annee:parseInt(el('blY').value),soldeInitial:parseFloat(el('blI').value),soldeNonConsommeInitial:parseFloat(el('blN').value)});toast('Ajusté','success');closeModal();loadUsers();}catch(e){toast(e.message,'error');}}
 
-function showModelModal(id){const m=id?S.models.find(x=>x.idModele===id):null;
-  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">${m?'Modifier':'Nouveau'} modèle</h3><div class="space-y-3">
-    <div><label class="text-xs text-on-surface-var mb-1 block">Nom</label><input id="mmN" class="input-field" value="${esc(m?.nom||'')}"></div>
-    <div class="grid grid-cols-2 gap-3"><div><label class="text-xs text-on-surface-var mb-1 block">Début</label><input id="mmD" type="time" class="input-field" value="${m?.heureDebut||'08:00'}"></div><div><label class="text-xs text-on-surface-var mb-1 block">Fin</label><input id="mmF" type="time" class="input-field" value="${m?.heureFin||'17:00'}"></div></div>
-    <div><label class="text-xs text-on-surface-var mb-1 block">Couleur</label><input id="mmC" type="color" class="input-field !p-1 !h-10" value="${m?.couleur||'#f2ca50'}"></div>
-    <div><label class="text-xs text-on-surface-var mb-1 block">Description</label><input id="mmDesc" class="input-field" value="${esc(m?.description||'')}"></div>
-    <button onclick="doSaveModel('${esc(id||'')}')" class="btn-primary w-full">Enregistrer</button></div>`);}
-async function doSaveModel(id){const p={nom:el('mmN').value.trim(),heureDebut:el('mmD').value,heureFin:el('mmF').value,couleur:el('mmC').value,description:el('mmDesc').value,actif:'Oui'};if(id)p.idModele=id;if(!p.nom)return toast('Nom requis','error');try{await api('apiAdminSaveShiftModele',S.token,p);toast('Enregistré','success');closeModal();loadModels();}catch(e){toast(e.message,'error');}}
+function showModelModal(id){const m=id?S.models.find(x=>x.idModele===id):null;openModal(`<h3 class="font-headline font-semibold text-lg mb-4">${m?'Modifier':'Nouveau'} modèle</h3><div class="space-y-3"><div><label class="text-xs text-on-surface-var mb-1 block">Nom</label><input id="mmN" class="input-field" value="${esc(m?.nom||'')}"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs text-on-surface-var mb-1 block">Début</label><input id="mmD" type="time" class="input-field" value="${m?.heureDebut||'08:00'}"></div><div><label class="text-xs text-on-surface-var mb-1 block">Fin</label><input id="mmF" type="time" class="input-field" value="${m?.heureFin||'17:00'}"></div></div><div><label class="text-xs text-on-surface-var mb-1 block">Couleur</label><input id="mmC" type="color" class="input-field !p-1 !h-10" value="${m?.couleur||'#f2ca50'}"></div><div><label class="text-xs text-on-surface-var mb-1 block">Description</label><input id="mmDesc" class="input-field" value="${esc(m?.description||'')}"></div><button onclick="doSaveModel('${esc(id||'')}')" class="btn-primary w-full">Enregistrer</button></div>`);}
+async function doSaveModel(id){const p={nom:el('mmN').value.trim(),heureDebut:el('mmD').value,heureFin:el('mmF').value,couleur:el('mmC').value,description:el('mmDesc').value,actif:'Oui'};if(id)p.idModele=id;if(!p.nom)return toast('Nom requis','error');try{await api('apiAdminSaveShiftModele',S.token,p);toast('OK','success');closeModal();loadModels();}catch(e){toast(e.message,'error');}}
 
-function showPlageModal(id){const p=id?S.plages.find(x=>x.idPlage===id):null;
-  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">${p?'Modifier':'Nouvelle'} plage</h3><div class="space-y-3">
-    <div><label class="text-xs text-on-surface-var mb-1 block">Nom</label><input id="mpN" class="input-field" value="${esc(p?.nom||'')}"></div>
-    <div><label class="text-xs text-on-surface-var mb-1 block">Équipe</label><input id="mpE" class="input-field" value="${esc(p?.equipe||'')}"></div>
-    <div class="grid grid-cols-2 gap-3"><div><label class="text-xs text-on-surface-var mb-1 block">Début</label><input id="mpD" type="time" class="input-field" value="${p?.heureDebut||'08:00'}"></div><div><label class="text-xs text-on-surface-var mb-1 block">Fin</label><input id="mpF" type="time" class="input-field" value="${p?.heureFin||'17:00'}"></div></div>
-    <div><label class="text-xs text-on-surface-var mb-1 block">Flux</label><input id="mpFl" class="input-field" value="${esc(p?.niveauFlux||'Normal')}"></div>
-    <div><label class="text-xs text-on-surface-var mb-1 block">Effectif min</label><input id="mpEf" type="number" class="input-field" value="${p?.effectifMin||1}"></div>
-    <div><label class="text-xs text-on-surface-var mb-1 block">Couleur</label><input id="mpC" type="color" class="input-field !p-1 !h-10" value="${p?.couleur||'#f2ca50'}"></div>
-    <button onclick="doSavePlage('${esc(id||'')}')" class="btn-primary w-full">Enregistrer</button></div>`);}
-async function doSavePlage(id){const p={nom:el('mpN').value.trim(),equipe:el('mpE').value.trim(),heureDebut:el('mpD').value,heureFin:el('mpF').value,niveauFlux:el('mpFl').value,effectifMin:parseInt(el('mpEf').value)||1,couleur:el('mpC').value,actif:'Oui'};if(id)p.idPlage=id;if(!p.nom)return toast('Nom requis','error');try{await api('apiAdminSavePlageHoraire',S.token,p);toast('Enregistrée','success');closeModal();loadPlages();}catch(e){toast(e.message,'error');}}
+function showPlageModal(id){const p=id?S.plages.find(x=>x.idPlage===id):null;openModal(`<h3 class="font-headline font-semibold text-lg mb-4">${p?'Modifier':'Nouvelle'} plage</h3><div class="space-y-3"><div><label class="text-xs text-on-surface-var mb-1 block">Nom</label><input id="mpN" class="input-field" value="${esc(p?.nom||'')}"></div><div><label class="text-xs text-on-surface-var mb-1 block">Équipe</label><input id="mpE" class="input-field" value="${esc(p?.equipe||'')}"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs text-on-surface-var mb-1 block">Début</label><input id="mpD" type="time" class="input-field" value="${p?.heureDebut||'08:00'}"></div><div><label class="text-xs text-on-surface-var mb-1 block">Fin</label><input id="mpF" type="time" class="input-field" value="${p?.heureFin||'17:00'}"></div></div><div><label class="text-xs text-on-surface-var mb-1 block">Flux</label><input id="mpFl" class="input-field" value="${esc(p?.niveauFlux||'Normal')}"></div><div><label class="text-xs text-on-surface-var mb-1 block">Effectif min</label><input id="mpEf" type="number" class="input-field" value="${p?.effectifMin||1}"></div><div><label class="text-xs text-on-surface-var mb-1 block">Couleur</label><input id="mpC" type="color" class="input-field !p-1 !h-10" value="${p?.couleur||'#f2ca50'}"></div><button onclick="doSavePlage('${esc(id||'')}')" class="btn-primary w-full">Enregistrer</button></div>`);}
+async function doSavePlage(id){const p={nom:el('mpN').value.trim(),equipe:el('mpE').value.trim(),heureDebut:el('mpD').value,heureFin:el('mpF').value,niveauFlux:el('mpFl').value,effectifMin:parseInt(el('mpEf').value)||1,couleur:el('mpC').value,actif:'Oui'};if(id)p.idPlage=id;if(!p.nom)return toast('Nom requis','error');try{await api('apiAdminSavePlageHoraire',S.token,p);toast('OK','success');closeModal();loadPlages();}catch(e){toast(e.message,'error');}}
 
-function showHolidayModal(){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Jour férié</h3><div class="space-y-3">
-  <div><label class="text-xs text-on-surface-var mb-1 block">Date</label><input id="mhD" type="date" class="input-field"></div>
-  <div><label class="text-xs text-on-surface-var mb-1 block">Libellé</label><input id="mhL" class="input-field"></div>
-  <button onclick="doSaveHoliday()" class="btn-primary w-full">Ajouter</button></div>`);}
-async function doSaveHoliday(){const p={date:el('mhD').value,libelle:el('mhL').value.trim()};if(!p.date||!p.libelle)return toast('Requis','error');try{await api('apiAdminSaveHoliday',S.token,p);toast('Ajouté','success');closeModal();loadHolidays();}catch(e){toast(e.message,'error');}}
+function showHolidayModal(){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Jour férié</h3><div class="space-y-3"><div><label class="text-xs text-on-surface-var mb-1 block">Date</label><input id="mhD" type="date" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Libellé</label><input id="mhL" class="input-field"></div><button onclick="doSaveHoliday()" class="btn-primary w-full">Ajouter</button></div>`);}
+async function doSaveHoliday(){const p={date:el('mhD').value,libelle:el('mhL').value.trim()};if(!p.date||!p.libelle)return toast('Requis','error');try{await api('apiAdminSaveHoliday',S.token,p);toast('OK','success');closeModal();loadHolidays();}catch(e){toast(e.message,'error');}}
 
-function showTeamRuleModal(eq){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">${eq?'Modifier':'Nouvelle'} règle</h3><div class="space-y-3">
-  <div><label class="text-xs text-on-surface-var mb-1 block">Équipe</label><input id="mrE" class="input-field" value="${esc(eq||'')}" ${eq?'readonly':''}></div>
-  <div><label class="text-xs text-on-surface-var mb-1 block">Max demandes/j</label><input id="mrMD" type="number" class="input-field" value="5"></div>
-  <div><label class="text-xs text-on-surface-var mb-1 block">Délai min (j)</label><input id="mrDl" type="number" class="input-field" value="3"></div>
-  <div><label class="text-xs text-on-surface-var mb-1 block">Max absents/j</label><input id="mrMA" type="number" class="input-field" value="2"></div>
-  <div><label class="text-xs text-on-surface-var mb-1 block">Heure limite</label><input id="mrHL" type="time" class="input-field" value="18:00"></div>
-  <button onclick="doSaveRule()" class="btn-primary w-full">Enregistrer</button></div>`);}
-async function doSaveRule(){const p={equipe:el('mrE').value.trim(),maxDemandesParJour:parseInt(el('mrMD').value),delaiMinAvantCongeJours:parseInt(el('mrDl').value),maxAbsentsParJour:parseInt(el('mrMA').value),heureLimiteDepot:el('mrHL').value,actif:'Oui'};if(!p.equipe)return toast('Équipe requise','error');try{await api('apiAdminSaveTeamRule',S.token,p);toast('Enregistrée','success');closeModal();loadTeamRules();}catch(e){toast(e.message,'error');}}
+function showTeamRuleModal(eq){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">${eq?'Modifier':'Nouvelle'} règle</h3><div class="space-y-3"><div><label class="text-xs text-on-surface-var mb-1 block">Équipe</label><input id="mrE" class="input-field" value="${esc(eq||'')}" ${eq?'readonly':''}></div><div><label class="text-xs text-on-surface-var mb-1 block">Max demandes/j</label><input id="mrMD" type="number" class="input-field" value="5"></div><div><label class="text-xs text-on-surface-var mb-1 block">Délai min (j)</label><input id="mrDl" type="number" class="input-field" value="3"></div><div><label class="text-xs text-on-surface-var mb-1 block">Max absents/j</label><input id="mrMA" type="number" class="input-field" value="2"></div><div><label class="text-xs text-on-surface-var mb-1 block">Heure limite</label><input id="mrHL" type="time" class="input-field" value="18:00"></div><button onclick="doSaveRule()" class="btn-primary w-full">Enregistrer</button></div>`);}
+async function doSaveRule(){const p={equipe:el('mrE').value.trim(),maxDemandesParJour:parseInt(el('mrMD').value),delaiMinAvantCongeJours:parseInt(el('mrDl').value),maxAbsentsParJour:parseInt(el('mrMA').value),heureLimiteDepot:el('mrHL').value,actif:'Oui'};if(!p.equipe)return toast('Équipe requise','error');try{await api('apiAdminSaveTeamRule',S.token,p);toast('OK','success');closeModal();loadTeamRules();}catch(e){toast(e.message,'error');}}
 
-function showShiftModal(idShift,date,userId){
-  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">${idShift?'Modifier':'Nouveau'} shift</h3><div class="space-y-3">
-    <div><label class="text-xs text-on-surface-var mb-1 block">Agent (ID)</label><input id="msU" class="input-field" value="${esc(userId||'')}" placeholder="ID agent"></div>
-    <div><label class="text-xs text-on-surface-var mb-1 block">Date</label><input id="msD" type="date" class="input-field" value="${date||''}"></div>
-    <div class="grid grid-cols-2 gap-3"><div><label class="text-xs text-on-surface-var mb-1 block">Début</label><input id="msDB" type="time" class="input-field" value="08:00"></div><div><label class="text-xs text-on-surface-var mb-1 block">Fin</label><input id="msFN" type="time" class="input-field" value="17:00"></div></div>
-    <div class="grid grid-cols-2 gap-3"><div><label class="text-xs text-on-surface-var mb-1 block">Pause début</label><input id="msPD" type="time" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Pause fin</label><input id="msPF" type="time" class="input-field"></div></div>
-    <div class="flex items-center gap-3"><input id="msOff" type="checkbox" class="accent-primary"><label class="text-sm">Jour OFF</label></div>
-    <div><label class="text-xs text-on-surface-var mb-1 block">Notes</label><input id="msN" class="input-field"></div>
-    <div class="flex gap-3"><button onclick="doSaveShift('${esc(idShift||'')}')" class="btn-primary flex-1">Enregistrer</button>
-      ${idShift?`<button onclick="doDelShift('${esc(idShift)}')" class="btn-danger flex-1">Supprimer</button>`:''}</div></div>`);}
-async function doSaveShift(id){const p={userId:el('msU').value.trim().toUpperCase(),date:el('msD').value,heureDebut:el('msDB').value,heureFin:el('msFN').value,pauseDebut:el('msPD').value,pauseFin:el('msPF').value,isOff:el('msOff').checked?'Oui':'Non',notes:el('msN').value};if(id)p.idShift=id;if(!p.userId||!p.date)return toast('Agent et date requis','error');try{await api('apiAdminSaveShift',S.token,p);toast('Enregistré','success');closeModal();loadAdminPlanning();}catch(e){toast(e.message,'error');}}
+function showShiftModal(idShift,date,userId){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">${idShift?'Modifier':'Nouveau'} shift</h3><div class="space-y-3"><div><label class="text-xs text-on-surface-var mb-1 block">Agent (ID)</label><input id="msU" class="input-field" value="${esc(userId||'')}" placeholder="ID"></div><div><label class="text-xs text-on-surface-var mb-1 block">Date</label><input id="msD" type="date" class="input-field" value="${date||''}"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs text-on-surface-var mb-1 block">Début</label><input id="msDB" type="time" class="input-field" value="08:00"></div><div><label class="text-xs text-on-surface-var mb-1 block">Fin</label><input id="msFN" type="time" class="input-field" value="17:00"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs text-on-surface-var mb-1 block">Pause début</label><input id="msPD" type="time" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Pause fin</label><input id="msPF" type="time" class="input-field"></div></div><div class="flex items-center gap-3"><input id="msOff" type="checkbox" class="accent-primary"><label class="text-sm">OFF</label></div><div><label class="text-xs text-on-surface-var mb-1 block">Notes</label><input id="msN" class="input-field"></div><div class="flex gap-3"><button onclick="doSaveShift('${esc(idShift||'')}')" class="btn-primary flex-1">Enregistrer</button>${idShift?`<button onclick="doDelShift('${esc(idShift)}')" class="btn-danger flex-1">Suppr</button>`:''}</div></div>`);}
+async function doSaveShift(id){const p={userId:el('msU').value.trim().toUpperCase(),date:el('msD').value,heureDebut:el('msDB').value,heureFin:el('msFN').value,pauseDebut:el('msPD').value,pauseFin:el('msPF').value,isOff:el('msOff').checked?'Oui':'Non',notes:el('msN').value};if(id)p.idShift=id;if(!p.userId||!p.date)return toast('Agent et date requis','error');try{await api('apiAdminSaveShift',S.token,p);toast('OK','success');closeModal();loadAdminPlanning();}catch(e){toast(e.message,'error');}}
 async function doDelShift(id){if(!confirm('Supprimer ?'))return;try{await api('apiAdminDeleteShift',S.token,id);toast('Supprimé','success');closeModal();loadAdminPlanning();}catch(e){toast(e.message,'error');}}
 
-function showBulkModal(op){
-  const t={copyWeek:'Copier semaine',applyModel:'Appliquer modèle',clearWeek:'Vider semaine',assignShift:'Assigner shift'};let f='';
+function showBulkModal(op){const t={copyWeek:'Copier semaine',applyModel:'Appliquer modèle',clearWeek:'Vider semaine',assignShift:'Assigner shift'};let f='';
   if(op==='copyWeek')f=`<div><label class="text-xs text-on-surface-var mb-1 block">Source (lundi)</label><input id="bkS" type="date" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Cible (lundi)</label><input id="bkT" type="date" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Équipe</label><input id="bkE" class="input-field"></div>`;
   else if(op==='applyModel'){const o=S.models.map(m=>`<option value="${esc(m.idModele)}">${esc(m.nom)}</option>`).join('');f=`<div><label class="text-xs text-on-surface-var mb-1 block">Modèle</label><select id="bkM" class="input-field">${o}</select></div><div><label class="text-xs text-on-surface-var mb-1 block">Semaine (lundi)</label><input id="bkT" type="date" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Agent ID</label><input id="bkU" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Équipe</label><input id="bkE" class="input-field"></div>`;}
   else if(op==='clearWeek')f=`<div><label class="text-xs text-on-surface-var mb-1 block">Semaine (lundi)</label><input id="bkT" type="date" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Équipe</label><input id="bkE" class="input-field"></div>`;
   else if(op==='assignShift')f=`<div><label class="text-xs text-on-surface-var mb-1 block">Agent ID</label><input id="bkU" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Date</label><input id="bkDt" type="date" class="input-field"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs text-on-surface-var mb-1 block">Début</label><input id="bkDB" type="time" class="input-field" value="08:00"></div><div><label class="text-xs text-on-surface-var mb-1 block">Fin</label><input id="bkFN" type="time" class="input-field" value="17:00"></div></div>`;
-  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">${t[op]}</h3><div class="space-y-3">${f}<button onclick="doBulk('${op}')" class="btn-primary w-full">Exécuter</button></div>`);
-}
-async function doBulk(op){
-  const p={operation:op};
-  if(op==='copyWeek'){p.sourceLundi=el('bkS')?.value;p.cibleLundi=el('bkT')?.value;p.equipe=el('bkE')?.value;}
-  else if(op==='applyModel'){p.idModele=el('bkM')?.value;p.cibleLundi=el('bkT')?.value;p.userId=el('bkU')?.value?.trim()?.toUpperCase();p.equipe=el('bkE')?.value;}
-  else if(op==='clearWeek'){p.cibleLundi=el('bkT')?.value;p.equipe=el('bkE')?.value;if(!confirm('Vider cette semaine ?'))return;}
-  else if(op==='assignShift'){p.userId=el('bkU')?.value?.trim()?.toUpperCase();p.date=el('bkDt')?.value;p.heureDebut=el('bkDB')?.value;p.heureFin=el('bkFN')?.value;}
-  try{await api('apiAdminBulkShifts',S.token,p);toast('Effectué','success');closeModal();loadAdminPlanning();}catch(e){toast(e.message,'error');}
-}
+  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">${t[op]}</h3><div class="space-y-3">${f}<button onclick="doBulk('${op}')" class="btn-primary w-full">Exécuter</button></div>`);}
+async function doBulk(op){const p={operation:op};if(op==='copyWeek'){p.sourceLundi=el('bkS')?.value;p.cibleLundi=el('bkT')?.value;p.equipe=el('bkE')?.value;}else if(op==='applyModel'){p.idModele=el('bkM')?.value;p.cibleLundi=el('bkT')?.value;p.userId=el('bkU')?.value?.trim()?.toUpperCase();p.equipe=el('bkE')?.value;}else if(op==='clearWeek'){p.cibleLundi=el('bkT')?.value;p.equipe=el('bkE')?.value;if(!confirm('Vider ?'))return;}else if(op==='assignShift'){p.userId=el('bkU')?.value?.trim()?.toUpperCase();p.date=el('bkDt')?.value;p.heureDebut=el('bkDB')?.value;p.heureFin=el('bkFN')?.value;}try{await api('apiAdminBulkShifts',S.token,p);toast('OK','success');closeModal();loadAdminPlanning();}catch(e){toast(e.message,'error');}}
 
-function showAdjustPtgModal(id){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Ajuster pointage</h3><div class="space-y-3">
-  <div><label class="text-xs text-on-surface-var mb-1 block">Arrivée</label><input id="ajA" type="time" class="input-field"></div>
-  <div><label class="text-xs text-on-surface-var mb-1 block">Départ</label><input id="ajD" type="time" class="input-field"></div>
-  <div><label class="text-xs text-on-surface-var mb-1 block">Notes</label><input id="ajN" class="input-field"></div>
-  <button onclick="doAdjPtg('${esc(id)}')" class="btn-primary w-full">Ajuster</button></div>`);}
-async function doAdjPtg(id){try{await api('apiAdminAdjustPointage',S.token,{idPointage:id,heureArrivee:el('ajA').value,heureDepart:el('ajD').value,notes:el('ajN').value});toast('Ajusté','success');closeModal();loadAdminPointage();}catch(e){toast(e.message,'error');}}
+function showAdjustPtgModal(id){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Ajuster pointage</h3><div class="space-y-3"><div><label class="text-xs text-on-surface-var mb-1 block">Arrivée</label><input id="ajA" type="time" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Départ</label><input id="ajD" type="time" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Notes</label><input id="ajN" class="input-field"></div><button onclick="doAdjPtg('${esc(id)}')" class="btn-primary w-full">Ajuster</button></div>`);}
+async function doAdjPtg(id){try{await api('apiAdminAdjustPointage',S.token,{idPointage:id,heureArrivee:el('ajA').value,heureDepart:el('ajD').value,notes:el('ajN').value});toast('OK','success');closeModal();loadAdminPointage();}catch(e){toast(e.message,'error');}}
 
 /* =========== BOOT =========== */
 (async function(){const ok=await checkSession();if(ok)await initApp();else el('loginView').style.display='flex';})();
