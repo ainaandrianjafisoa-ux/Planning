@@ -1,273 +1,1547 @@
 <!DOCTYPE html>
-
-<html class="dark" lang="en"><head>
+<html class="dark" lang="fr">
+<head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Fluid Architecture - Home</title>
+<title>Gestion Planning & Congés</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@300;500;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "outline-variant": "#4d4635",
-                        "on-tertiary": "#082b72",
-                        "surface": "#111318",
-                        "on-surface-variant": "#d0c5af",
-                        "on-secondary-container": "#c8b37d",
-                        "primary-fixed": "#ffe088",
-                        "surface-container-low": "#1a1b21",
-                        "on-tertiary-fixed-variant": "#27438a",
-                        "secondary-container": "#544519",
-                        "inverse-primary": "#735c00",
-                        "on-primary": "#3c2f00",
-                        "on-tertiary-container": "#254188",
-                        "secondary-fixed": "#f7e1a6",
-                        "on-primary-fixed-variant": "#574500",
-                        "surface-bright": "#37393f",
-                        "surface-tint": "#e9c349",
-                        "on-error": "#690005",
-                        "error": "#ffb4ab",
-                        "primary-container": "#d4af37",
-                        "tertiary-fixed-dim": "#b4c5ff",
-                        "on-primary-fixed": "#241a00",
-                        "on-error-container": "#ffdad6",
-                        "error-container": "#93000a",
-                        "primary": "#f2ca50",
-                        "on-secondary": "#3c2f05",
-                        "on-secondary-fixed": "#241a00",
-                        "on-background": "#e2e2e9",
-                        "surface-container-lowest": "#0c0e13",
-                        "on-surface": "#e2e2e9",
-                        "inverse-surface": "#e2e2e9",
-                        "on-secondary-fixed-variant": "#544519",
-                        "primary-fixed-dim": "#e9c349",
-                        "on-primary-container": "#554300",
-                        "inverse-on-surface": "#2e3036",
-                        "tertiary": "#bfcdff",
-                        "surface-dim": "#111318",
-                        "surface-container-highest": "#33353a",
-                        "secondary-fixed-dim": "#dac58d",
-                        "secondary": "#dac58d",
-                        "on-tertiary-fixed": "#00174b",
-                        "tertiary-fixed": "#dbe1ff",
-                        "surface-variant": "#33353a",
-                        "outline": "#99907c",
-                        "background": "#111318",
-                        "tertiary-container": "#97b0ff",
-                        "surface-container-high": "#282a2f",
-                        "surface-container": "#1e1f25"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "1.5rem",
-                        "full": "9999px"
-                    },
-                    "fontFamily": {
-                        "headline": ["Space Grotesk"],
-                        "body": ["Inter"],
-                        "label": ["Inter"]
-                    }
-                },
-            },
-        }
-    </script>
-<style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .glass-card {
-            background: rgba(51, 53, 58, 0.4);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-        .glowing-glow {
-            box-shadow: 0 0 20px rgba(242, 202, 80, 0.3);
-        }
-        .tonal-shift {
-            background: linear-gradient(180deg, #111318 0%, #1a1b21 100%);
-        }
-    </style>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "outline-variant":"#4d4635","on-tertiary":"#082b72","surface":"#111318",
+        "on-surface-variant":"#d0c5af","on-secondary-container":"#c8b37d",
+        "primary-fixed":"#ffe088","surface-container-low":"#1a1b21",
+        "secondary-container":"#544519","inverse-primary":"#735c00",
+        "on-primary":"#3c2f00","on-tertiary-container":"#254188",
+        "secondary-fixed":"#f7e1a6","surface-bright":"#37393f",
+        "surface-tint":"#e9c349","on-error":"#690005","error":"#ffb4ab",
+        "primary-container":"#d4af37","tertiary-fixed-dim":"#b4c5ff",
+        "on-primary-fixed":"#241a00","on-error-container":"#ffdad6",
+        "error-container":"#93000a","primary":"#f2ca50",
+        "on-secondary":"#3c2f05","on-background":"#e2e2e9",
+        "surface-container-lowest":"#0c0e13","on-surface":"#e2e2e9",
+        "inverse-surface":"#e2e2e9","primary-fixed-dim":"#e9c349",
+        "on-primary-container":"#554300","inverse-on-surface":"#2e3036",
+        "tertiary":"#bfcdff","surface-dim":"#111318",
+        "surface-container-highest":"#33353a","secondary":"#dac58d",
+        "tertiary-fixed":"#dbe1ff","surface-variant":"#33353a",
+        "outline":"#99907c","background":"#111318",
+        "tertiary-container":"#97b0ff","surface-container-high":"#282a2f",
+        "surface-container":"#1e1f25"
+      },
+      borderRadius:{DEFAULT:"0.25rem",lg:"0.5rem",xl:"1.5rem",full:"9999px"},
+      fontFamily:{headline:["Space Grotesk"],body:["Inter"],label:["Inter"]}
     }
-  </style>
-  </head>
-<body class="bg-surface text-on-surface font-body selection:bg-primary/30 min-h-screen pb-32">
+  }
+};
+</script>
+<style>
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+.mso-filled{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+.glass-card{background:rgba(51,53,58,0.4);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.glowing-glow{box-shadow:0 0 20px rgba(242,202,80,0.3)}
+body{min-height:100dvh;background:#111318}
+
+/* View transitions */
+.view{display:none;opacity:0;transition:opacity .25s ease}
+.view.active{display:block;animation:viewIn .3s ease forwards}
+@keyframes viewIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* Refresh pulse - minimal */
+.refresh-pulse{animation:rPulse .4s ease}
+@keyframes rPulse{0%{opacity:.85}50%{opacity:.6}100%{opacity:1}}
+
+/* Skeleton shimmer */
+.skeleton{background:linear-gradient(90deg,#1e1f25 25%,#282a2f 50%,#1e1f25 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:.5rem}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* Toast */
+.toast{position:fixed;top:80px;right:16px;z-index:9999;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:500;transform:translateX(120%);transition:transform .3s cubic-bezier(.2,.8,.2,1);max-width:340px}
+.toast.show{transform:translateX(0)}
+.toast-ok{background:#1a3a1a;color:#4ade80;border:1px solid #22543d}
+.toast-err{background:#3a1a1a;color:#ffb4ab;border:1px solid #7f1d1d}
+
+/* Modal overlay */
+.modal-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:#1e1f25;border:1px solid #33353a;border-radius:1rem;padding:1.5rem;max-width:500px;width:90%;max-height:85vh;overflow-y:auto;animation:modalIn .25s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#33353a;border-radius:4px}
+
+/* Status badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:9999px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.badge-pending{background:rgba(243,156,18,.15);color:#f39c12;border:1px solid rgba(243,156,18,.3)}
+.badge-approved{background:rgba(46,204,113,.15);color:#2ecc71;border:1px solid rgba(46,204,113,.3)}
+.badge-rejected{background:rgba(231,76,60,.15);color:#e74c3c;border:1px solid rgba(231,76,60,.3)}
+.badge-canceled{background:rgba(127,140,141,.15);color:#95a5a6;border:1px solid rgba(127,140,141,.3)}
+
+/* Table styles */
+.data-table{width:100%;border-collapse:separate;border-spacing:0}
+.data-table th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#d0c5af;padding:8px 12px;border-bottom:1px solid #33353a;font-weight:600}
+.data-table td{padding:10px 12px;font-size:13px;border-bottom:1px solid rgba(51,53,58,.5);vertical-align:middle}
+.data-table tbody tr:hover{background:rgba(51,53,58,.3)}
+
+/* Btn */
+.btn-primary{background:linear-gradient(135deg,#f2ca50,#d4af37);color:#3c2f00;font-weight:700;border-radius:9999px;padding:10px 24px;font-size:13px;transition:all .2s;cursor:pointer}
+.btn-primary:hover{transform:scale(1.03);box-shadow:0 0 20px rgba(242,202,80,.3)}
+.btn-primary:active{transform:scale(.97)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-secondary{background:#33353a;color:#e2e2e9;font-weight:600;border-radius:9999px;padding:10px 24px;font-size:13px;transition:all .2s;cursor:pointer}
+.btn-secondary:hover{background:#3d3f44}
+.btn-ghost{background:transparent;color:#d0c5af;font-weight:500;padding:8px 16px;font-size:12px;border-radius:8px;transition:all .15s;cursor:pointer}
+.btn-ghost:hover{background:rgba(51,53,58,.5);color:#e2e2e9}
+.btn-danger{background:#93000a;color:#ffdad6;font-weight:600;border-radius:9999px;padding:10px 24px;font-size:13px;transition:all .2s;cursor:pointer}
+.btn-danger:hover{background:#a01010}
+
+/* Input */
+.input-field{background:#111318;border:1px solid #4d4635;color:#e2e2e9;border-radius:.5rem;padding:10px 14px;font-size:14px;width:100%;transition:border-color .2s;font-family:Inter,sans-serif}
+.input-field:focus{outline:none;border-color:#d4af37;box-shadow:0 0 0 2px rgba(212,175,55,.15)}
+.input-field::placeholder{color:#6b6355}
+select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23d0c5af' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+
+/* Tabs */
+.tab-btn{padding:8px 16px;font-size:12px;font-weight:600;color:#99907c;border-bottom:2px solid transparent;transition:all .2s;cursor:pointer;text-transform:uppercase;letter-spacing:.05em}
+.tab-btn.active{color:#f2ca50;border-bottom-color:#f2ca50}
+.tab-btn:hover:not(.active){color:#d0c5af}
+
+/* Shift cell in planning */
+.shift-cell{border-radius:8px;padding:6px 8px;font-size:11px;font-weight:600;text-align:center;min-height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.shift-cell:hover{transform:scale(1.04);box-shadow:0 2px 12px rgba(0,0,0,.3)}
+
+/* Nav active dot */
+.nav-dot::after{content:'';display:block;width:4px;height:4px;border-radius:50%;background:#ffe088;margin-top:3px;box-shadow:0 0 8px #f2ca50}
+
+/* Loading spinner */
+.spinner{width:20px;height:20px;border:2px solid #33353a;border-top-color:#f2ca50;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Week grid */
+.week-grid{display:grid;grid-template-columns:120px repeat(7,1fr);gap:2px;font-size:12px}
+@media(max-width:768px){.week-grid{grid-template-columns:80px repeat(7,1fr);font-size:10px}}
+</style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary/30 min-h-screen">
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<!-- ============ LOGIN VIEW ============ -->
+<div id="view-login" class="view active" style="display:flex;opacity:1;min-height:100dvh;align-items:center;justify-content:center">
+<div class="w-full max-w-sm px-6">
+  <div class="text-center mb-10">
+    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center">
+      <span class="material-symbols-outlined text-on-primary text-3xl">schedule</span>
+    </div>
+    <h1 class="font-headline text-3xl font-bold tracking-tight text-primary">Planning & Congés</h1>
+    <p class="text-on-surface-variant text-sm mt-2">Connectez-vous pour accéder à votre espace</p>
+  </div>
+  <form id="login-form" class="space-y-4" onsubmit="return handleLogin(event)">
+    <div>
+      <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Identifiant</label>
+      <input id="login-id" type="text" class="input-field" placeholder="Ex: AGT01" autocomplete="username" required/>
+    </div>
+    <div>
+      <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Mot de passe</label>
+      <input id="login-pw" type="password" class="input-field" placeholder="Votre mot de passe" autocomplete="current-password" required/>
+    </div>
+    <div id="login-error" class="text-error text-xs hidden"></div>
+    <button id="login-btn" type="submit" class="btn-primary w-full flex items-center justify-center gap-2 py-3">
+      <span id="login-spinner" class="spinner hidden"></span>
+      <span>Se connecter</span>
+    </button>
+  </form>
+</div>
+</div>
+
+<!-- ============ MAIN APP SHELL ============ -->
+<div id="app-shell" class="hidden">
+
 <!-- TopAppBar -->
-<header class="fixed top-0 w-full z-50 bg-[#111318]/60 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
-<div class="flex justify-between items-center px-6 py-4 w-full">
-<div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/20 hover:scale-105 transition-transform duration-300">
-<img alt="User Profile" class="w-full h-full object-cover" data-alt="close-up portrait of a professional woman with a minimalist aesthetic in a high-end office environment with warm lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2NzozezwEa9RhKrgPhxaM0LyjUbr3hIvYSiLzY_Ou4OmkoD3oVPp__wmSjHXrIwCP8Y70JI4XLalzs8g53OOoqjfT4INSLCFWpjUSB1LaPi8dHZZa2t_eP_giw8xx9IJTLlzDMQOs_lTs-H78Lnzbg3gjHoUza85_-zTPhbnjVwGVDvBGAFk_v5nVordO3GIPxz2Lpp2JN5C9oaqKazkBm5VyWi5qs67Q94YdiR-jfWlU3cwVf8YKbnXbG5mwZD-PudzC7uEhXZv1"/>
-</div>
-<span class="font-['Space_Grotesk'] font-bold text-[#d4af37] tracking-tighter text-xl">Fluid Architecture</span>
-</div>
-<div class="flex items-center gap-4">
-<div class="relative">
-<span class="material-symbols-outlined text-[#d0c5af] cursor-pointer hover:scale-105 transition-transform duration-300">notifications</span>
-<span class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full animate-pulse"></span>
-</div>
-<span class="material-symbols-outlined text-[#d0c5af] cursor-pointer hover:scale-105 transition-transform duration-300">settings</span>
-</div>
+<header class="fixed top-0 w-full z-50 bg-[#111318]/80 backdrop-blur-xl border-b border-outline-variant/10">
+<div class="flex justify-between items-center px-4 py-3 max-w-7xl mx-auto">
+  <div class="flex items-center gap-3">
+    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-container flex items-center justify-center">
+      <span class="material-symbols-outlined text-on-primary text-lg">person</span>
+    </div>
+    <div>
+      <p id="header-name" class="font-headline font-bold text-sm text-primary tracking-tight"></p>
+      <p id="header-role" class="text-[10px] text-on-surface-variant uppercase tracking-widest"></p>
+    </div>
+  </div>
+  <div class="flex items-center gap-3">
+    <button onclick="showPasswordModal()" class="p-2 rounded-lg hover:bg-surface-container-high transition-colors" title="Changer mot de passe">
+      <span class="material-symbols-outlined text-on-surface-variant text-xl">lock</span>
+    </button>
+    <button onclick="handleLogout()" class="p-2 rounded-lg hover:bg-surface-container-high transition-colors" title="Déconnexion">
+      <span class="material-symbols-outlined text-on-surface-variant text-xl">logout</span>
+    </button>
+  </div>
 </div>
 </header>
-<main class="pt-24 px-6 max-w-7xl mx-auto space-y-10 animate-in fade-in zoom-in duration-700">
-<!-- Hero: Balance Snapshot -->
-<section class="mt-8 space-y-6">
-<div class="flex justify-between items-end">
-<div>
-<h2 class="font-headline text-on-surface-variant tracking-wide uppercase text-xs mb-1">Time Balance Overview</h2>
-<div class="flex items-baseline gap-2">
-<span class="font-headline text-6xl font-bold tracking-tighter text-primary">164.5</span>
-<span class="font-headline text-2xl text-on-surface-variant font-light">HRS</span>
+
+<!-- Main content area -->
+<main class="pt-16 pb-24 px-4 max-w-7xl mx-auto">
+
+<!-- ===== HOME VIEW ===== -->
+<div id="view-home" class="view">
+  <div id="home-content" class="space-y-6 mt-4"></div>
 </div>
+
+<!-- ===== PLANNING VIEW ===== -->
+<div id="view-planning" class="view">
+  <div id="planning-content" class="space-y-6 mt-4"></div>
 </div>
-<div class="text-right pb-1">
-<p class="text-xs text-on-surface-variant font-medium uppercase tracking-widest mb-1">Next Accrual</p>
-<p class="font-headline text-xl text-primary-fixed">Oct 15</p>
+
+<!-- ===== LEAVE VIEW ===== -->
+<div id="view-leave" class="view">
+  <div id="leave-content" class="space-y-6 mt-4"></div>
 </div>
+
+<!-- ===== ADMIN VIEW ===== -->
+<div id="view-admin" class="view">
+  <div id="admin-content" class="space-y-6 mt-4"></div>
 </div>
-<!-- Bento Grid Highlights -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<!-- Current Shift Card -->
-<div class="md:col-span-2 glass-card rounded-xl p-8 relative overflow-hidden group">
-<div class="absolute top-0 right-0 p-6">
-<span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-tertiary-container/10 border border-tertiary/20 text-tertiary text-[10px] font-bold uppercase tracking-widest">
-<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span> Active Shift
-                        </span>
-</div>
-<div class="space-y-4">
-<h3 class="font-headline text-2xl font-medium">Core Logic Architecture</h3>
-<div class="flex items-center gap-6">
-<div>
-<p class="text-xs text-on-surface-variant uppercase tracking-tighter mb-1">Started At</p>
-<p class="font-headline text-lg">08:30 AM</p>
-</div>
-<div class="h-8 w-px bg-outline-variant/30"></div>
-<div>
-<p class="text-xs text-on-surface-variant uppercase tracking-tighter mb-1">Elapsed</p>
-<p class="font-headline text-lg text-primary">05:42:12</p>
-</div>
-</div>
-</div>
-<div class="mt-8 flex gap-4">
-<button class="px-8 py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold rounded-full text-sm hover:scale-105 active:scale-95 transition-all cubic-bezier(0.2,0.8,0.2,1) glowing-glow">
-                            Clock Out
-                        </button>
-<button class="px-8 py-3 bg-surface-variant/40 backdrop-blur text-on-surface font-semibold rounded-full text-sm hover:scale-105 active:scale-95 transition-all">
-                            Take Break
-                        </button>
-</div>
-</div>
-<!-- Alerts & Actions -->
-<div class="glass-card rounded-xl p-6 flex flex-col justify-between">
-<div class="space-y-4">
-<div class="flex items-center justify-between">
-<h3 class="font-headline text-sm font-bold uppercase tracking-widest text-[#d4af37]">Alerts</h3>
-<span class="material-symbols-outlined text-primary text-sm">bolt</span>
-</div>
-<div class="space-y-3">
-<div class="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low">
-<span class="material-symbols-outlined text-error text-lg">priority_high</span>
-<div>
-<p class="text-xs font-semibold">Approval Needed</p>
-<p class="text-[10px] text-on-surface-variant">Timecard for Week 42 is pending.</p>
-</div>
-</div>
-<div class="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low">
-<span class="material-symbols-outlined text-tertiary text-lg">info</span>
-<div>
-<p class="text-xs font-semibold">Policy Update</p>
-<p class="text-[10px] text-on-surface-variant">New Q4 travel guidelines active.</p>
-</div>
-</div>
-</div>
-</div>
-<button class="mt-4 w-full py-2 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant hover:text-primary transition-colors">
-                        View All Notifications
-                    </button>
-</div>
-</div>
-</section>
-<!-- Quick Actions & Secondary Stats -->
-<section class="grid grid-cols-1 md:grid-cols-4 gap-6">
-<div class="bg-surface-container-low rounded-xl p-6 flex flex-col items-center justify-center gap-3 group cursor-pointer hover:bg-surface-container-high transition-colors">
-<span class="material-symbols-outlined text-primary text-3xl transition-transform group-hover:scale-110">calendar_add_on</span>
-<span class="font-headline text-xs font-bold uppercase tracking-widest">Request Leave</span>
-</div>
-<div class="bg-surface-container-low rounded-xl p-6 flex flex-col items-center justify-center gap-3 group cursor-pointer hover:bg-surface-container-high transition-colors">
-<span class="material-symbols-outlined text-primary text-3xl transition-transform group-hover:scale-110">history</span>
-<span class="font-headline text-xs font-bold uppercase tracking-widest">Shift Logs</span>
-</div>
-<div class="bg-surface-container-low rounded-xl p-6 flex flex-col items-center justify-center gap-3 group cursor-pointer hover:bg-surface-container-high transition-colors">
-<span class="material-symbols-outlined text-primary text-3xl transition-transform group-hover:scale-110">receipt_long</span>
-<span class="font-headline text-xs font-bold uppercase tracking-widest">Expenses</span>
-</div>
-<div class="bg-surface-container-low rounded-xl p-6 flex flex-col items-center justify-center gap-3 group cursor-pointer hover:bg-surface-container-high transition-colors">
-<span class="material-symbols-outlined text-primary text-3xl transition-transform group-hover:scale-110">monitoring</span>
-<span class="font-headline text-xs font-bold uppercase tracking-widest">Reports</span>
-</div>
-</section>
-<!-- Script Ecosystem Visualization (Aesthetic element) -->
-<section class="glass-card rounded-xl overflow-hidden min-h-[300px] flex flex-col justify-end p-8 relative">
-<div class="absolute inset-0 z-0">
-<img alt="System Flow Aesthetic" class="w-full h-full object-cover opacity-30 grayscale" data-alt="abstract macro photography of architectural glass and structural steel with deep shadows and golden light leaks, high-end editorial feel" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3m76kAstvW-nHuT7qbrq6uR1ca-3WXYwqwv1IH-h4qcpo5pRjygVppw6Mm64hSxQXd6Rqa1N1fZRnnYjkB8Vuh7DKk8Cm4xdXnsgDvaiVybGruhkiw3A5HVkS6_mkM7YJnU4zQawh8qlbpA8jFy_reCW4_56WqN9S3tqeyvXnRtc-T8YDiY-Kckp3y42e0XO0Igz-0owSGeWNFdsY57iGypaEI-Qm9eGmp3DaIcYLKomjdYYHx5S-Dm3jBaMV2B_WsVGv0_8RHYYA"/>
-<div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent"></div>
-</div>
-<div class="relative z-10 space-y-2">
-<h2 class="font-headline text-3xl font-bold tracking-tight text-on-surface">Data Integration Engine</h2>
-<p class="text-on-surface-variant max-w-md text-sm leading-relaxed">System healthy. 14 automation scripts active across 4 primary sheets. Last synchronization completed 4 minutes ago.</p>
-<div class="pt-4 flex items-center gap-4">
-<div class="flex -space-x-3">
-<div class="w-8 h-8 rounded-full border-2 border-surface overflow-hidden">
-<img alt="Script 1" data-alt="abstract tech pattern icon for a digital script" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGA_c45F43rFDSVgAOf84pknyW6EshPLky86fBPGygDVjnULK4D_n3Mt1ns81hXkJDyYAcgofOEjj3AQybczxQb4L28OCTbNRXiGVU4-2VxiTr_SIzLuYHxILzgGQbm25l2qt0kvYQ9bqziYfixzDxWR6YJmPz3roKnSN8d-z_SvHY7VzZkj864i-Yf3R_39IuXUhXHT-kSAVw_TOAnODjG2iYQxafVBnHexgRh-exuZpUbhmUal9QBWpI5Q2zOiLzJ-p9DiFq0DHe"/>
-</div>
-<div class="w-8 h-8 rounded-full border-2 border-surface overflow-hidden">
-<img alt="Script 2" data-alt="abstract tech pattern icon for a digital script" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFESKE5raFXSkGSZc2J-ARfHNBZ5F755iqwz_VroNi3W1S9BH_UgR4bBFnbl3CJMQov9yWJOynIqYxNxr2YXj5Btw46nkMea9FSyaP122nwnebCHdyVKQNMn2kPV6UvjtnQWinB-xSOGuAvFTWC7LqyOVOgpxEB_WwkNCkfNbfCkhF6F4yiRZApwEM1T67oYMkV865b-4o7Tz-__PMD0JZWoedaBXk7T04HBjc7JQ-lgOElGpEZDBD1skjl-pYKT-2mHylMyHUZcOk"/>
-</div>
-<div class="w-8 h-8 rounded-full border-2 border-surface overflow-hidden">
-<img alt="Script 3" data-alt="abstract tech pattern icon for a digital script" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXfED30vBIrwC9ZZniDLosoYtmuWSkCiuPPKrlYGtVA-sFH6fq1SHjMl5I1WhdOtRr64qVWxuYMV4yaOlWFUYHM7G0G8mEWHoCxNyQtPo4hu5NgqlncegIPiVY9Rz9mLEC5i0Vef3IHorpD4EqWD0YSGiAzRyG5eXRWp7OsY0F6Rm6gXUhQUac3YJonUcjutp4F9NcOVKbBU55fdu_yjHvK_BpT-HMBLE-hfB0b0TF9WIKDw5VWyhpinHQWuoh7faAtuuSx7N4GMXr"/>
-</div>
-</div>
-<span class="text-xs text-on-surface-variant font-medium">+11 active processes</span>
-</div>
-</div>
-</section>
+
 </main>
-<!-- BottomNavBar -->
-<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-[400px] rounded-full z-50 bg-[#33353a]/60 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
-<div class="flex justify-around items-center py-3 px-4">
-<!-- Home (Active) -->
-<button class="flex flex-col items-center justify-center text-[#ffe088] after:content-[''] after:w-1 after:h-1 after:bg-[#ffe088] after:rounded-full after:mt-1 after:shadow-[0_0_8px_#f2ca50] transition-all active:scale-90 duration-300">
-<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">home</span>
-<span class="font-['Inter'] text-[10px] font-medium tracking-tight">Home</span>
-</button>
-<!-- Planning -->
-<button class="flex flex-col items-center justify-center text-[#d0c5af] opacity-60 hover:opacity-100 transition-opacity active:scale-90 duration-300">
-<span class="material-symbols-outlined text-2xl">event_note</span>
-<span class="font-['Inter'] text-[10px] font-medium tracking-tight">Planning</span>
-</button>
-<!-- Leave -->
-<button class="flex flex-col items-center justify-center text-[#d0c5af] opacity-60 hover:opacity-100 transition-opacity active:scale-90 duration-300">
-<span class="material-symbols-outlined text-2xl">event_busy</span>
-<span class="font-['Inter'] text-[10px] font-medium tracking-tight">Leave</span>
-</button>
-<!-- Admin -->
-<button class="flex flex-col items-center justify-center text-[#d0c5af] opacity-60 hover:opacity-100 transition-opacity active:scale-90 duration-300">
-<span class="material-symbols-outlined text-2xl">admin_panel_settings</span>
-<span class="font-['Inter'] text-[10px] font-medium tracking-tight">Admin</span>
-</button>
+
+<!-- Bottom Nav Bar -->
+<nav id="bottom-nav" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] md:w-[420px] rounded-full z-50 bg-[#1e1f25]/80 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,.5)] border border-outline-variant/10">
+<div class="flex justify-around items-center py-2.5 px-3">
+  <button onclick="navigateTo('home')" data-nav="home" class="nav-btn flex flex-col items-center justify-center px-3 py-1 rounded-xl transition-all">
+    <span class="material-symbols-outlined text-xl">home</span>
+    <span class="text-[10px] font-medium mt-0.5">Accueil</span>
+  </button>
+  <button onclick="navigateTo('planning')" data-nav="planning" class="nav-btn flex flex-col items-center justify-center px-3 py-1 rounded-xl transition-all">
+    <span class="material-symbols-outlined text-xl">calendar_month</span>
+    <span class="text-[10px] font-medium mt-0.5">Planning</span>
+  </button>
+  <button onclick="navigateTo('leave')" data-nav="leave" class="nav-btn flex flex-col items-center justify-center px-3 py-1 rounded-xl transition-all">
+    <span class="material-symbols-outlined text-xl">event_busy</span>
+    <span class="text-[10px] font-medium mt-0.5">Congés</span>
+  </button>
+  <button onclick="navigateTo('admin')" data-nav="admin" class="nav-btn flex flex-col items-center justify-center px-3 py-1 rounded-xl transition-all hidden">
+    <span class="material-symbols-outlined text-xl">admin_panel_settings</span>
+    <span class="text-[10px] font-medium mt-0.5">Admin</span>
+  </button>
 </div>
 </nav>
-<!-- Floating Action Button (Only on Mobile-ish viewports or as quick global) -->
-<button class="fixed bottom-24 right-8 w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all md:hidden">
-<span class="material-symbols-outlined text-3xl">add</span>
-</button>
-</body></html>
+
+</div><!-- /app-shell -->
+
+<!-- ============ MODAL ============ -->
+<div id="modal" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- ============ JAVASCRIPT ============ -->
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const S = {
+  token: null,
+  user: null,
+  config: null,
+  balance: null,
+  currentView: 'home',
+  planningWeekStart: null,
+  adminTab: 'dashboard'
+};
+
+// ============================================================
+// API LAYER - google.script.run wrapper
+// ============================================================
+function api(fn, ...args) {
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler(r => resolve(r))
+      .withFailureHandler(e => reject(e))
+      [fn](...args);
+  });
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function $(id) { return document.getElementById(id); }
+function qs(sel) { return document.querySelector(sel); }
+function qsa(sel) { return document.querySelectorAll(sel); }
+function esc(s) { const d=document.createElement('div');d.textContent=s||'';return d.innerHTML; }
+
+function toast(msg, ok=true) {
+  const t=$('toast');
+  t.className='toast '+(ok?'toast-ok':'toast-err');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+function formatDate(iso) {
+  if(!iso)return '-';
+  const d=new Date(iso+'T00:00:00');
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});
+}
+function formatDateTime(iso) {
+  if(!iso)return '-';
+  const d=new Date(iso);
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+ ' ' +d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+function today() {
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function mondayOfWeek(dateStr) {
+  const d=dateStr?new Date(dateStr+'T00:00:00'):new Date();
+  const day=d.getDay();
+  const diff=day===0?-6:1-day;
+  d.setDate(d.getDate()+diff);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function addDays(iso,n) {
+  const d=new Date(iso+'T00:00:00');
+  d.setDate(d.getDate()+n);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function dayNames() { return ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim']; }
+function shortDate(iso) {
+  if(!iso)return '';
+  const d=new Date(iso+'T00:00:00');
+  return d.getDate()+'/'+(d.getMonth()+1);
+}
+
+function statusBadge(statut) {
+  const map={'En attente':'badge-pending','Validé':'badge-approved','Refusé':'badge-rejected','Annulé':'badge-canceled'};
+  return '<span class="badge '+(map[statut]||'badge-canceled')+'">'+esc(statut)+'</span>';
+}
+
+function skeleton(h='16px',w='100%') {
+  return '<div class="skeleton" style="height:'+h+';width:'+w+'"></div>';
+}
+
+function isAdmin() { return S.user && S.user.role==='admin'; }
+
+// ============================================================
+// AUTH
+// ============================================================
+async function handleLogin(e) {
+  e.preventDefault();
+  const id=$('login-id').value.trim();
+  const pw=$('login-pw').value;
+  if(!id||!pw) return false;
+  $('login-btn').disabled=true;
+  $('login-spinner').classList.remove('hidden');
+  $('login-error').classList.add('hidden');
+  try {
+    const r=await api('apiLogin',id,pw);
+    S.token=r.token;
+    S.user=r.user;
+    sessionStorage.setItem('token',S.token);
+    await initApp();
+  } catch(err) {
+    $('login-error').textContent=err.message||'Erreur de connexion';
+    $('login-error').classList.remove('hidden');
+  } finally {
+    $('login-btn').disabled=false;
+    $('login-spinner').classList.add('hidden');
+  }
+  return false;
+}
+
+async function handleLogout() {
+  try { await api('apiLogout',S.token); } catch(e) {}
+  S.token=null; S.user=null;
+  sessionStorage.removeItem('token');
+  location.reload();
+}
+
+async function checkSession() {
+  const token=sessionStorage.getItem('token');
+  if(!token) return false;
+  try {
+    const r=await api('apiGetSession',token);
+    S.token=token;
+    S.user=r.user;
+    return true;
+  } catch(e) {
+    sessionStorage.removeItem('token');
+    return false;
+  }
+}
+
+// ============================================================
+// APP INIT
+// ============================================================
+async function initApp() {
+  // Hide login, show app shell
+  $('view-login').style.display='none';
+  $('app-shell').classList.remove('hidden');
+
+  // Set header
+  $('header-name').textContent=S.user.nomComplet||S.user.userId;
+  $('header-role').textContent=S.user.role==='admin'?'Administrateur':'Agent — '+(S.user.equipe||'');
+
+  // Show admin nav if admin
+  if(isAdmin()) {
+    document.querySelector('[data-nav="admin"]').classList.remove('hidden');
+  }
+
+  // Load init data
+  try {
+    const init=await api('apiGetInitData',S.token);
+    S.config=init.config;
+    S.balance=init.myBalance;
+  } catch(e) { console.error('initData',e); }
+
+  S.planningWeekStart=mondayOfWeek();
+  navigateTo('home');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function navigateTo(view) {
+  S.currentView=view;
+  // Toggle views
+  qsa('.view').forEach(v=>{v.classList.remove('active');v.style.display='none'});
+  const target=$('view-'+view);
+  if(target){target.style.display='block';setTimeout(()=>target.classList.add('active'),10);}
+
+  // Update nav
+  qsa('.nav-btn').forEach(b=>{
+    const isActive=b.dataset.nav===view;
+    b.className='nav-btn flex flex-col items-center justify-center px-3 py-1 rounded-xl transition-all '
+      +(isActive?'text-primary-fixed nav-dot':'text-on-surface-variant opacity-60 hover:opacity-100')
+      +(b.dataset.nav==='admin'&&!isAdmin()?' hidden':'');
+    b.querySelector('.material-symbols-outlined').classList.toggle('mso-filled',isActive);
+  });
+
+  // Load content
+  if(view==='home') loadHome();
+  else if(view==='planning') loadPlanning();
+  else if(view==='leave') loadLeave();
+  else if(view==='admin') loadAdmin();
+}
+
+// ============================================================
+// HOME VIEW
+// ============================================================
+async function loadHome() {
+  const c=$('home-content');
+  if(isAdmin()) {
+    c.innerHTML=buildHomeSkeletonAdmin();
+    try {
+      const [dash, planning] = await Promise.all([
+        api('apiGetDashboard',S.token),
+        api('apiGetPresenceOverview',S.token,{date:today()})
+      ]);
+      renderAdminHome(c,dash,planning);
+    } catch(e) { c.innerHTML='<p class="text-error">'+esc(e.message)+'</p>'; }
+  } else {
+    c.innerHTML=buildHomeSkeleton();
+    try {
+      const [bal, planning] = await Promise.all([
+        api('apiGetMyBalance',S.token),
+        api('apiGetMyPlanning',S.token,{})
+      ]);
+      S.balance=bal;
+      renderAgentHome(c,bal,planning);
+    } catch(e) { c.innerHTML='<p class="text-error">'+esc(e.message)+'</p>'; }
+  }
+}
+
+function buildHomeSkeleton() {
+  return '<div class="space-y-6">'+skeleton('120px')+'<div class="grid grid-cols-2 gap-4">'+skeleton('80px')+skeleton('80px')+'</div>'+skeleton('160px')+'</div>';
+}
+function buildHomeSkeletonAdmin() {
+  return '<div class="space-y-6">'+skeleton('80px')+'<div class="grid grid-cols-2 md:grid-cols-4 gap-4">'+skeleton('90px')+skeleton('90px')+skeleton('90px')+skeleton('90px')+'</div>'+skeleton('200px')+'</div>';
+}
+
+function renderAgentHome(c, bal, planning) {
+  const ts=planning.todayStatus||{};
+  const shift=planning.todayShift;
+  const ptg=planning.todayPointage;
+  const canClockIn=shift&&shift.isOff!=='oui'&&!ptg?.heureArrivee&&ts.key!=='en_conge';
+  const canClockOut=ptg&&ptg.heureArrivee&&!ptg.heureDepart;
+
+  c.innerHTML=`
+  <!-- Balance Card -->
+  <div class="glass-card rounded-xl p-6">
+    <div class="flex justify-between items-start">
+      <div>
+        <p class="text-xs text-on-surface-variant uppercase tracking-widest font-semibold mb-1">Solde Congés ${esc(String(bal.annee||''))}</p>
+        <div class="flex items-baseline gap-2">
+          <span class="font-headline text-5xl font-bold tracking-tighter text-primary">${bal.soldeRestant??0}</span>
+          <span class="font-headline text-lg text-on-surface-variant font-light">jours</span>
+        </div>
+      </div>
+      <div class="text-right space-y-1">
+        <div class="text-[10px] text-on-surface-variant uppercase tracking-wider">Initial: <span class="text-on-surface font-semibold">${bal.soldeInitial??0}j</span></div>
+        <div class="text-[10px] text-on-surface-variant uppercase tracking-wider">Pris: <span class="text-on-surface font-semibold">${bal.congesPris??0}j</span></div>
+        <div class="text-[10px] text-on-surface-variant uppercase tracking-wider">En attente: <span class="text-primary font-semibold">${bal.joursPendants??0}j</span></div>
+      </div>
+    </div>
+    ${bal.soldeNonConsommeRestant>0?'<div class="mt-3 pt-3 border-t border-outline-variant/20 text-xs text-on-surface-variant">Solde non consommé: <span class="text-tertiary font-semibold">'+bal.soldeNonConsommeRestant+'j</span></div>':''}
+  </div>
+
+  <!-- Today Status + Pointage -->
+  <div class="glass-card rounded-xl p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-headline text-sm font-bold uppercase tracking-widest text-primary-container">Aujourd'hui</h3>
+      <span class="badge ${ts.key==='present'||ts.key==='present_retard'?'badge-approved':ts.key==='en_conge'?'badge-pending':ts.key==='absent'?'badge-rejected':'badge-canceled'}">${esc(ts.label||'Non planifié')}</span>
+    </div>
+    ${shift?`
+    <div class="flex items-center gap-6 mb-4">
+      <div>
+        <p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Shift</p>
+        <p class="font-headline text-lg">${shift.isOff==='oui'?'OFF':esc(shift.heureDebut)+' — '+esc(shift.heureFin)}</p>
+        ${shift.nomModele?'<p class="text-[10px] text-on-surface-variant">'+esc(shift.nomModele)+'</p>':''}
+      </div>
+      ${ptg&&ptg.heureArrivee?`
+      <div class="h-8 w-px bg-outline-variant/30"></div>
+      <div>
+        <p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Pointage</p>
+        <p class="font-headline text-lg text-primary">${esc(ptg.heureArrivee)}${ptg.heureDepart?' — '+esc(ptg.heureDepart):' <span class="text-xs text-tertiary">(en cours)</span>'}</p>
+        ${ptg.retardMinutes>5?'<p class="text-[10px] text-error">Retard: '+ptg.retardMinutes+' min</p>':''}
+      </div>`:''}
+    </div>`:'<p class="text-sm text-on-surface-variant mb-4">Aucun shift planifié aujourd\'hui.</p>'}
+    <div class="flex gap-3">
+      ${canClockIn?'<button onclick="clockIn()" class="btn-primary text-xs py-2 px-6">Pointer Arrivée</button>':''}
+      ${canClockOut?'<button onclick="clockOut()" class="btn-primary text-xs py-2 px-6">Pointer Départ</button>':''}
+      ${!canClockIn&&!canClockOut&&ptg&&ptg.heureDepart?'<p class="text-xs text-on-surface-variant italic">Journée terminée</p>':''}
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="grid grid-cols-3 gap-3">
+    <button onclick="navigateTo('leave');setTimeout(()=>showNewLeaveForm(),200)" class="bg-surface-container-low rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-surface-container-high transition-colors">
+      <span class="material-symbols-outlined text-primary text-2xl">add_circle</span>
+      <span class="text-[10px] font-bold uppercase tracking-wider">Demander</span>
+    </button>
+    <button onclick="navigateTo('planning')" class="bg-surface-container-low rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-surface-container-high transition-colors">
+      <span class="material-symbols-outlined text-primary text-2xl">calendar_month</span>
+      <span class="text-[10px] font-bold uppercase tracking-wider">Planning</span>
+    </button>
+    <button onclick="showSwapRequests()" class="bg-surface-container-low rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-surface-container-high transition-colors">
+      <span class="material-symbols-outlined text-primary text-2xl">swap_horiz</span>
+      <span class="text-[10px] font-bold uppercase tracking-wider">Échanges</span>
+    </button>
+  </div>`;
+}
+
+function renderAdminHome(c, dash, presence) {
+  const cards=dash.cards||{};
+  const stats=presence.stats||{};
+  c.innerHTML=`
+  <h2 class="font-headline text-xl font-bold tracking-tight">Dashboard Administrateur</h2>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="glass-card rounded-xl p-5">
+      <div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-primary text-lg">pending_actions</span><span class="text-[10px] text-on-surface-variant uppercase tracking-widest font-semibold">En attente</span></div>
+      <p class="font-headline text-3xl font-bold text-primary">${cards.pending||0}</p>
+    </div>
+    <div class="glass-card rounded-xl p-5">
+      <div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-[#2ecc71] text-lg">check_circle</span><span class="text-[10px] text-on-surface-variant uppercase tracking-widest font-semibold">Validés</span></div>
+      <p class="font-headline text-3xl font-bold text-[#2ecc71]">${cards.approved||0}</p>
+    </div>
+    <div class="glass-card rounded-xl p-5">
+      <div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-error text-lg">cancel</span><span class="text-[10px] text-on-surface-variant uppercase tracking-widest font-semibold">Refusés</span></div>
+      <p class="font-headline text-3xl font-bold text-error">${cards.rejected||0}</p>
+    </div>
+    <div class="glass-card rounded-xl p-5">
+      <div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-tertiary text-lg">speed</span><span class="text-[10px] text-on-surface-variant uppercase tracking-widest font-semibold">Moy. traitement</span></div>
+      <p class="font-headline text-3xl font-bold text-tertiary">${cards.avgProcessingHours||0}<span class="text-sm font-light">h</span></p>
+    </div>
+  </div>
+
+  <!-- Presence Overview -->
+  <div class="glass-card rounded-xl p-6">
+    <h3 class="font-headline text-sm font-bold uppercase tracking-widest text-primary-container mb-4">Présence du jour — ${formatDate(today())}</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div class="bg-surface-container-low rounded-lg p-3 text-center">
+        <p class="font-headline text-2xl font-bold text-[#2ecc71]">${stats.presents||0}</p>
+        <p class="text-[10px] text-on-surface-variant uppercase">Présents</p>
+      </div>
+      <div class="bg-surface-container-low rounded-lg p-3 text-center">
+        <p class="font-headline text-2xl font-bold text-error">${stats.absents||0}</p>
+        <p class="text-[10px] text-on-surface-variant uppercase">Absents</p>
+      </div>
+      <div class="bg-surface-container-low rounded-lg p-3 text-center">
+        <p class="font-headline text-2xl font-bold text-tertiary">${stats.enConge||0}</p>
+        <p class="text-[10px] text-on-surface-variant uppercase">En congé</p>
+      </div>
+      <div class="bg-surface-container-low rounded-lg p-3 text-center">
+        <p class="font-headline text-2xl font-bold text-on-surface-variant">${(stats.off||0)+(stats.nonPlanifie||0)}</p>
+        <p class="text-[10px] text-on-surface-variant uppercase">OFF/Non planifié</p>
+      </div>
+    </div>
+    ${(presence.overview||[]).length>0?`
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead><tr><th>Agent</th><th>Équipe</th><th>Shift</th><th>Statut</th></tr></thead>
+        <tbody>
+          ${(presence.overview||[]).map(o=>`<tr>
+            <td class="font-medium">${esc(o.nomAgent)}</td>
+            <td class="text-on-surface-variant">${esc(o.equipe)}</td>
+            <td>${o.shift?(o.shift.isOff==='oui'?'OFF':esc(o.shift.heureDebut||'')+' — '+esc(o.shift.heureFin||'')):'—'}</td>
+            <td><span class="badge ${o.statusKey==='present'||o.statusKey==='present_retard'?'badge-approved':o.statusKey==='absent'?'badge-rejected':o.statusKey==='en_conge'?'badge-pending':'badge-canceled'}">${esc(o.statut)}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`:''}
+  </div>
+
+  <!-- By Type + By Team -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="glass-card rounded-xl p-5">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Par type de congé</h3>
+      ${(dash.byType||[]).map(t=>`<div class="flex justify-between items-center py-1.5"><span class="text-sm">${esc(t.type)}</span><span class="font-headline font-bold text-primary">${t.count}</span></div>`).join('')}
+    </div>
+    <div class="glass-card rounded-xl p-5">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">En attente par équipe</h3>
+      ${(dash.byTeamPending||[]).map(t=>`<div class="flex justify-between items-center py-1.5"><span class="text-sm">${esc(t.equipe)}</span><span class="font-headline font-bold text-primary">${t.count}</span></div>`).join('')}
+      ${(dash.byTeamPending||[]).length===0?'<p class="text-sm text-on-surface-variant italic">Aucune demande en attente</p>':''}
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// POINTAGE (Clock In/Out)
+// ============================================================
+async function clockIn() {
+  try { await api('apiPointageClockIn',S.token,{}); toast('Arrivée pointée !'); loadHome(); }
+  catch(e) { toast(e.message,false); }
+}
+async function clockOut() {
+  try { await api('apiPointageClockOut',S.token,{}); toast('Départ pointé !'); loadHome(); }
+  catch(e) { toast(e.message,false); }
+}
+// ============================================================
+// PLANNING VIEW
+// ============================================================
+async function loadPlanning() {
+  const c=$('planning-content');
+  c.innerHTML='<div class="space-y-4">'+skeleton('40px')+'<div class="flex gap-2 mb-4">'+skeleton('36px','80px')+skeleton('36px','80px')+'</div>'+skeleton('300px')+'</div>';
+  try {
+    if(isAdmin()) {
+      const r=await api('apiAdminGetPlanning',S.token,{dateDebut:S.planningWeekStart,dateFin:addDays(S.planningWeekStart,6)});
+      renderAdminPlanning(c,r);
+    } else {
+      const r=await api('apiGetMyPlanning',S.token,{dateDebut:S.planningWeekStart,dateFin:addDays(S.planningWeekStart,6)});
+      renderAgentPlanning(c,r);
+    }
+  } catch(e) { c.innerHTML='<p class="text-error">'+esc(e.message)+'</p>'; }
+}
+
+function weekNavHtml() {
+  const wEnd=addDays(S.planningWeekStart,6);
+  return `<div class="flex items-center justify-between">
+    <h2 class="font-headline text-lg font-bold tracking-tight">Planning</h2>
+    <div class="flex items-center gap-2">
+      <button onclick="changeWeek(-7)" class="btn-ghost"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+      <span class="text-xs font-semibold">${shortDate(S.planningWeekStart)} — ${shortDate(wEnd)}</span>
+      <button onclick="changeWeek(7)" class="btn-ghost"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+      <button onclick="S.planningWeekStart=mondayOfWeek();loadPlanning()" class="btn-ghost text-xs">Auj.</button>
+    </div>
+  </div>`;
+}
+
+function changeWeek(n) {
+  S.planningWeekStart=addDays(S.planningWeekStart,n);
+  loadPlanning();
+}
+
+function renderAgentPlanning(c, data) {
+  const days=dayNames();
+  const shifts=data.shifts||[];
+  const leaves=data.leaves||[];
+
+  let grid='<div class="overflow-x-auto"><div class="grid grid-cols-7 gap-2 min-w-[500px]">';
+  for(let i=0;i<7;i++){
+    const d=addDays(S.planningWeekStart,i);
+    const dName=days[i];
+    const shift=shifts.find(s=>s.date===d);
+    const leave=leaves.find(l=>l.dateDebut<=d&&l.dateFin>=d);
+    const isToday=d===today();
+
+    let cellContent='', cellBg='bg-surface-container-low', cellBorder='';
+    if(isToday) cellBorder='ring-1 ring-primary/40';
+    if(leave) {
+      cellBg=leave.statut==='Validé'?'bg-tertiary/10':'bg-primary/10';
+      cellContent=`<span class="material-symbols-outlined text-xs ${leave.statut==='Validé'?'text-tertiary':'text-primary'}">event_busy</span>
+        <p class="text-[10px] font-semibold">${esc(leave.typeConge)}</p>
+        <p class="text-[9px] text-on-surface-variant">${esc(leave.statut)}</p>`;
+    } else if(shift) {
+      if(shift.isOff==='oui') {
+        cellBg='bg-surface-container-highest/50';
+        cellContent='<p class="text-xs font-bold text-on-surface-variant">OFF</p>';
+      } else {
+        cellContent=`<div class="w-full h-1 rounded-full mb-1" style="background:${esc(shift.couleurModele||'#4ea1ff')}"></div>
+          <p class="text-xs font-semibold">${esc(shift.heureDebut)} — ${esc(shift.heureFin)}</p>
+          ${shift.nomModele?'<p class="text-[9px] text-on-surface-variant">'+esc(shift.nomModele)+'</p>':''}`;
+      }
+    } else {
+      cellContent='<p class="text-[10px] text-on-surface-variant italic">—</p>';
+    }
+
+    grid+=`<div class="rounded-xl p-3 ${cellBg} ${cellBorder} text-center space-y-1">
+      <p class="text-[10px] font-bold uppercase tracking-wider ${isToday?'text-primary':'text-on-surface-variant'}">${dName}</p>
+      <p class="text-[10px] text-on-surface-variant">${shortDate(d)}</p>
+      <div class="mt-2">${cellContent}</div>
+    </div>`;
+  }
+  grid+='</div></div>';
+
+  c.innerHTML=weekNavHtml()+grid+`
+  <div class="flex gap-3 mt-2">
+    <button onclick="loadGroupPlanning()" class="btn-secondary text-xs py-2">Planning Équipe</button>
+    <button onclick="loadMyPointage()" class="btn-secondary text-xs py-2">Mon Pointage</button>
+  </div>`;
+}
+
+function renderAdminPlanning(c, data) {
+  const days=dayNames();
+  const users=data.users||[];
+  const sByUser=data.shiftsByUser||{};
+  const leaves=data.leaves||[];
+
+  let table='<div class="overflow-x-auto"><div class="week-grid">';
+  // Header
+  table+='<div class="p-2 font-semibold text-xs text-on-surface-variant">Agent</div>';
+  for(let i=0;i<7;i++){
+    const d=addDays(S.planningWeekStart,i);
+    const isToday=d===today();
+    table+=`<div class="p-2 text-center ${isToday?'text-primary font-bold':'text-on-surface-variant'} text-xs">${days[i]}<br>${shortDate(d)}</div>`;
+  }
+  // Rows
+  users.forEach(u=>{
+    const uid=u.userId.toUpperCase();
+    table+=`<div class="p-2 text-xs font-medium truncate border-t border-outline-variant/10">${esc(u.nomAgent)}</div>`;
+    for(let i=0;i<7;i++){
+      const d=addDays(S.planningWeekStart,i);
+      const shift=sByUser[uid]?.[d]||null;
+      const leave=leaves.find(l=>l.userId.toUpperCase()===uid&&l.dateDebut<=d&&l.dateFin>=d);
+      let cell='';
+      if(leave){
+        const clr=leave.statut==='Validé'?'rgba(191,205,255,.2)':'rgba(242,202,80,.15)';
+        cell=`<div class="shift-cell border border-outline-variant/10" style="background:${clr}" onclick="showShiftModal('${uid}','${d}')">
+          <span class="text-[9px]">${esc(leave.typeConge)}</span></div>`;
+      } else if(shift) {
+        if(shift.isOff==='oui'){
+          cell=`<div class="shift-cell bg-surface-container-highest/50" onclick="showShiftModal('${uid}','${d}')"><span class="text-[10px] text-on-surface-variant font-bold">OFF</span></div>`;
+        } else {
+          cell=`<div class="shift-cell" style="background:${esc(shift.couleurModele||'#4ea1ff')}22;border:1px solid ${esc(shift.couleurModele||'#4ea1ff')}44" onclick="showShiftModal('${uid}','${d}')">
+            <span class="text-[10px]">${esc(shift.heureDebut)}-${esc(shift.heureFin)}</span></div>`;
+        }
+      } else {
+        cell=`<div class="shift-cell bg-surface-container-low/30 hover:bg-surface-container-high border border-dashed border-outline-variant/20" onclick="showShiftModal('${uid}','${d}')">
+          <span class="material-symbols-outlined text-on-surface-variant/30 text-sm">add</span></div>`;
+      }
+      table+=`<div class="p-1 border-t border-outline-variant/10">${cell}</div>`;
+    }
+  });
+  table+='</div></div>';
+
+  c.innerHTML=weekNavHtml()+`
+  <div class="flex gap-2 flex-wrap">
+    <button onclick="showBulkShiftModal()" class="btn-secondary text-xs py-2">Opérations en masse</button>
+    <button onclick="showModelesList()" class="btn-secondary text-xs py-2">Modèles de shifts</button>
+    <button onclick="loadAdminPointage()" class="btn-secondary text-xs py-2">Pointage</button>
+    <button onclick="showSwapRequests()" class="btn-secondary text-xs py-2">Échanges</button>
+  </div>`+table;
+}
+
+// ============================================================
+// GROUP PLANNING (Agent)
+// ============================================================
+async function loadGroupPlanning() {
+  const c=$('planning-content');
+  c.innerHTML=skeleton('300px');
+  try {
+    const r=await api('apiGetGroupPlanning',S.token,{dateDebut:S.planningWeekStart,dateFin:addDays(S.planningWeekStart,6)});
+    const days=dayNames();
+    const agents=r.agents||[];
+    const sByUser=r.shiftsByUser||{};
+
+    let html=weekNavHtml()+'<h3 class="text-sm font-bold text-on-surface-variant uppercase tracking-widest mt-4">Planning Équipe</h3>';
+    html+='<div class="overflow-x-auto"><div class="week-grid">';
+    html+='<div class="p-2 text-xs font-semibold text-on-surface-variant">Agent</div>';
+    for(let i=0;i<7;i++){
+      const d=addDays(S.planningWeekStart,i);
+      html+=`<div class="p-2 text-center text-on-surface-variant text-xs">${days[i]}<br>${shortDate(d)}</div>`;
+    }
+    agents.forEach(u=>{
+      const uid=u.userId.toUpperCase();
+      html+=`<div class="p-2 text-xs font-medium truncate border-t border-outline-variant/10">${esc(u.nomAgent)}</div>`;
+      for(let i=0;i<7;i++){
+        const d=addDays(S.planningWeekStart,i);
+        const shift=sByUser[uid]?.[d]||null;
+        let cell='<span class="text-on-surface-variant/30">—</span>';
+        if(shift){
+          if(shift.isOff==='oui') cell='<span class="text-[10px] text-on-surface-variant font-bold">OFF</span>';
+          else cell=`<span class="text-[10px]" style="color:${esc(shift.couleurModele)}">${esc(shift.heureDebut)}-${esc(shift.heureFin)}</span>`;
+        }
+        html+=`<div class="p-1 border-t border-outline-variant/10 text-center">${cell}</div>`;
+      }
+    });
+    html+='</div></div><button onclick="loadPlanning()" class="btn-ghost text-xs mt-4">Retour</button>';
+    c.innerHTML=html;
+  } catch(e) { c.innerHTML='<p class="text-error">'+esc(e.message)+'</p>'; }
+}
+// ============================================================
+// LEAVE VIEW
+// ============================================================
+async function loadLeave() {
+  const c=$('leave-content');
+  c.innerHTML='<div class="space-y-4">'+skeleton('40px')+skeleton('200px')+'</div>';
+  try {
+    const scope=isAdmin()?'all':'mine';
+    const r=await api('apiListLeaves',S.token,{scope,page:1,pageSize:50});
+    renderLeaveView(c,r);
+  } catch(e) { c.innerHTML='<p class="text-error">'+esc(e.message)+'</p>'; }
+}
+
+function renderLeaveView(c, data) {
+  const items=data.items||[];
+  const pendingItems=items.filter(i=>i.statut==='En attente');
+  const otherItems=items.filter(i=>i.statut!=='En attente');
+
+  let html=`<div class="flex items-center justify-between">
+    <h2 class="font-headline text-lg font-bold tracking-tight">Congés</h2>
+    <button onclick="showNewLeaveForm()" class="btn-primary text-xs py-2">
+      <span class="material-symbols-outlined text-sm mr-1" style="vertical-align:middle">add</span>Nouvelle demande
+    </button>
+  </div>`;
+
+  // Pending first for admin
+  if(isAdmin()&&pendingItems.length>0) {
+    html+=`<div class="glass-card rounded-xl p-5">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-primary mb-3">En attente de validation (${pendingItems.length})</h3>
+      <div class="space-y-2">
+        ${pendingItems.map(i=>`<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg hover:bg-surface-container-high transition-colors">
+          <div class="flex-1">
+            <p class="text-sm font-semibold">${esc(i.nomAgent)} <span class="text-on-surface-variant font-normal">— ${esc(i.typeConge)}</span></p>
+            <p class="text-xs text-on-surface-variant">${formatDate(i.dateDebut)} → ${formatDate(i.dateFin)} (${i.nbJours}j)</p>
+            ${i.motif?'<p class="text-[10px] text-on-surface-variant mt-1 italic">'+esc(i.motif)+'</p>':''}
+          </div>
+          <div class="flex gap-2 ml-4">
+            <button onclick="processLeave('${esc(i.idDemande)}','validate')" class="p-2 rounded-lg bg-[#2ecc71]/10 hover:bg-[#2ecc71]/20 transition-colors" title="Valider">
+              <span class="material-symbols-outlined text-[#2ecc71] text-lg">check</span>
+            </button>
+            <button onclick="processLeave('${esc(i.idDemande)}','reject')" class="p-2 rounded-lg bg-error/10 hover:bg-error/20 transition-colors" title="Refuser">
+              <span class="material-symbols-outlined text-error text-lg">close</span>
+            </button>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // All requests table
+  const allItems=isAdmin()?otherItems:items;
+  html+=`<div class="glass-card rounded-xl p-5">
+    <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">${isAdmin()?'Historique des demandes':'Mes demandes'} (${data.total})</h3>
+    ${allItems.length>0?`
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead><tr>${isAdmin()?'<th>Agent</th>':''}<th>Type</th><th>Dates</th><th>Jours</th><th>Statut</th><th></th></tr></thead>
+        <tbody>
+          ${allItems.map(i=>`<tr>
+            ${isAdmin()?'<td class="font-medium">'+esc(i.nomAgent)+'</td>':''}
+            <td>${esc(i.typeConge)}</td>
+            <td class="text-on-surface-variant text-xs">${formatDate(i.dateDebut)}${i.dateDebut!==i.dateFin?' → '+formatDate(i.dateFin):''}</td>
+            <td class="font-semibold">${i.nbJours}</td>
+            <td>${statusBadge(i.statut)}</td>
+            <td>
+              ${!isAdmin()&&i.statut==='En attente'?'<button onclick="cancelLeave(\''+esc(i.idDemande)+'\')" class="btn-ghost text-[10px] text-error">Annuler</button>':''}
+              ${isAdmin()?'<button onclick="showLeaveDetail(\''+esc(i.idDemande)+'\')" class="btn-ghost text-[10px]">Détail</button>':''}
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`:'<p class="text-sm text-on-surface-variant italic">Aucune demande</p>'}
+  </div>`;
+
+  c.innerHTML=html;
+}
+
+// New Leave Form
+function showNewLeaveForm() {
+  const types=(S.config?.leaveTypes||['Annuel','Maladie','Exceptionnel','Sans solde']);
+  openModal(`
+    <h3 class="font-headline text-lg font-bold mb-4">Nouvelle demande de congé</h3>
+    <form onsubmit="return submitLeave(event)" class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Type de congé</label>
+        <select id="nl-type" class="input-field" required>
+          ${types.map(t=>'<option value="'+esc(t)+'">'+esc(t)+'</option>').join('')}
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Date début</label>
+          <input id="nl-start" type="date" class="input-field" required/>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Date fin</label>
+          <input id="nl-end" type="date" class="input-field" required/>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Demi-journée</label>
+        <select id="nl-half" class="input-field">
+          <option value="Aucune">Journée complète</option>
+          <option value="Matin">Matin uniquement</option>
+          <option value="Après-midi">Après-midi uniquement</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Motif</label>
+        <input id="nl-motif" type="text" class="input-field" placeholder="Optionnel"/>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1">Soumettre</button>
+        <button type="button" onclick="closeModal()" class="btn-secondary">Annuler</button>
+      </div>
+    </form>`);
+}
+
+async function submitLeave(e) {
+  e.preventDefault();
+  const payload={
+    typeConge:$('nl-type').value,
+    dateDebut:$('nl-start').value,
+    dateFin:$('nl-end').value,
+    demiJournee:$('nl-half').value,
+    motif:$('nl-motif').value
+  };
+  try {
+    await api('apiCreateLeave',S.token,payload);
+    closeModal();
+    toast('Demande créée !');
+    loadLeave();
+  } catch(err) { toast(err.message,false); }
+  return false;
+}
+
+async function cancelLeave(id) {
+  if(!confirm('Annuler cette demande ?')) return;
+  try { await api('apiCancelLeave',S.token,id); toast('Demande annulée'); loadLeave(); }
+  catch(e) { toast(e.message,false); }
+}
+
+async function processLeave(id, action) {
+  const label=action==='validate'?'valider':'refuser';
+  const comment=prompt('Commentaire (optionnel) pour '+label+' :','');
+  if(comment===null) return;
+  try {
+    await api('apiProcessLeave',S.token,{idDemande:id,action,commentaire:comment});
+    toast('Demande '+(action==='validate'?'validée':'refusée'));
+    loadLeave();
+  } catch(e) { toast(e.message,false); }
+}
+
+async function showLeaveDetail(id) {
+  try {
+    const r=await api('apiGetLeaveDetails',S.token,id);
+    const i=r.item;
+    const perms=r.permissions||{};
+    openModal(`
+      <h3 class="font-headline text-lg font-bold mb-4">Détail demande</h3>
+      <div class="space-y-3 text-sm">
+        <div class="flex justify-between"><span class="text-on-surface-variant">ID</span><span class="font-mono text-xs">${esc(i.idDemande)}</span></div>
+        <div class="flex justify-between"><span class="text-on-surface-variant">Agent</span><span>${esc(i.nomAgent)} (${esc(i.userId)})</span></div>
+        <div class="flex justify-between"><span class="text-on-surface-variant">Équipe</span><span>${esc(i.equipe)}</span></div>
+        <div class="flex justify-between"><span class="text-on-surface-variant">Type</span><span>${esc(i.typeConge)}</span></div>
+        <div class="flex justify-between"><span class="text-on-surface-variant">Dates</span><span>${formatDate(i.dateDebut)} → ${formatDate(i.dateFin)}</span></div>
+        <div class="flex justify-between"><span class="text-on-surface-variant">Jours</span><span class="font-bold">${i.nbJours}</span></div>
+        <div class="flex justify-between"><span class="text-on-surface-variant">Demi-journée</span><span>${esc(i.demiJournee)}</span></div>
+        <div class="flex justify-between"><span class="text-on-surface-variant">Statut</span>${statusBadge(i.statut)}</div>
+        ${i.motif?'<div class="flex justify-between"><span class="text-on-surface-variant">Motif</span><span>'+esc(i.motif)+'</span></div>':''}
+        ${i.commentaireAdmin?'<div class="flex justify-between"><span class="text-on-surface-variant">Commentaire admin</span><span>'+esc(i.commentaireAdmin)+'</span></div>':''}
+        ${i.adminTraitant?'<div class="flex justify-between"><span class="text-on-surface-variant">Traité par</span><span>'+esc(i.adminTraitant)+'</span></div>':''}
+      </div>
+      <div class="flex gap-3 mt-4">
+        ${perms.canValidate?'<button onclick="processLeave(\''+esc(i.idDemande)+'\',\'validate\');closeModal()" class="btn-primary flex-1 text-xs">Valider</button>':''}
+        ${perms.canReject?'<button onclick="processLeave(\''+esc(i.idDemande)+'\',\'reject\');closeModal()" class="btn-danger flex-1 text-xs">Refuser</button>':''}
+        ${perms.canDelete?'<button onclick="deleteLeave(\''+esc(i.idDemande)+'\');closeModal()" class="btn-ghost text-error text-xs">Supprimer</button>':''}
+        <button onclick="closeModal()" class="btn-secondary text-xs">Fermer</button>
+      </div>`);
+  } catch(e) { toast(e.message,false); }
+}
+
+async function deleteLeave(id) {
+  const motif=prompt('Motif de suppression (obligatoire) :');
+  if(!motif) return;
+  try { await api('apiAdminDeleteLeave',S.token,{idDemande:id,motifSuppression:motif}); toast('Demande supprimée'); loadLeave(); }
+  catch(e) { toast(e.message,false); }
+}
+// ============================================================
+// ADMIN VIEW
+// ============================================================
+async function loadAdmin() {
+  if(!isAdmin()){$('admin-content').innerHTML='<p class="text-error">Accès non autorisé</p>';return;}
+  const c=$('admin-content');
+  const tabs=['users','holidays','params','teamrules','models','history'];
+  const tabLabels=['Utilisateurs','Jours fériés','Paramètres','Règles équipe','Modèles shifts','Historique'];
+  let html=`<h2 class="font-headline text-lg font-bold tracking-tight">Administration</h2>
+  <div class="flex gap-1 overflow-x-auto border-b border-outline-variant/20 pb-0">
+    ${tabs.map((t,i)=>'<button onclick="loadAdminTab(\''+t+'\')" class="tab-btn '+(S.adminTab===t?'active':'')+'">'+tabLabels[i]+'</button>').join('')}
+  </div>
+  <div id="admin-tab-content"></div>`;
+  c.innerHTML=html;
+  loadAdminTab(S.adminTab);
+}
+
+async function loadAdminTab(tab) {
+  S.adminTab=tab;
+  // Update active tab style
+  qsa('.tab-btn').forEach((b,i)=>b.classList.toggle('active',b.textContent.toLowerCase().includes(tab.substring(0,4))||
+    (tab==='users'&&i===0)||(tab==='holidays'&&i===1)||(tab==='params'&&i===2)||(tab==='teamrules'&&i===3)||(tab==='models'&&i===4)||(tab==='history'&&i===5)));
+  // Simpler: just re-set via index
+  const tabs=['users','holidays','params','teamrules','models','history'];
+  qsa('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
+
+  const tc=$('admin-tab-content');
+  tc.innerHTML=skeleton('200px');
+
+  try {
+    if(tab==='users') await loadAdminUsers(tc);
+    else if(tab==='holidays') await loadAdminHolidays(tc);
+    else if(tab==='params') await loadAdminParams(tc);
+    else if(tab==='teamrules') await loadAdminTeamRules(tc);
+    else if(tab==='models') await loadAdminModels(tc);
+    else if(tab==='history') await loadAdminHistory(tc);
+  } catch(e) { tc.innerHTML='<p class="text-error">'+esc(e.message)+'</p>'; }
+}
+
+// --- USERS ---
+async function loadAdminUsers(tc) {
+  const r=await api('apiAdminListUsers',S.token);
+  const users=r.users||[];
+  tc.innerHTML=`
+  <div class="flex justify-between items-center mb-3">
+    <p class="text-xs text-on-surface-variant">${users.length} utilisateur(s)</p>
+    <button onclick="showUserForm()" class="btn-primary text-xs py-2">Ajouter</button>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="data-table">
+      <thead><tr><th>ID</th><th>Nom</th><th>Rôle</th><th>Équipe</th><th>Actif</th><th>Solde</th><th></th></tr></thead>
+      <tbody>
+        ${users.map(u=>`<tr>
+          <td class="font-mono text-xs">${esc(u.userId)}</td>
+          <td class="font-medium">${esc(u.nomComplet)}</td>
+          <td><span class="badge ${u.role==='admin'?'badge-approved':'badge-pending'}">${esc(u.role)}</span></td>
+          <td class="text-on-surface-variant">${esc(u.equipe)}</td>
+          <td>${u.actif==='oui'?'<span class="text-[#2ecc71]">Oui</span>':'<span class="text-error">Non</span>'}</td>
+          <td class="font-semibold">${u.balance?u.balance.soldeRestant+'j':'-'}</td>
+          <td><button onclick='showUserForm(${JSON.stringify(u).replace(/'/g,"&#39;")})' class="btn-ghost text-[10px]">Modifier</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function showUserForm(user) {
+  const isNew=!user;
+  openModal(`
+    <h3 class="font-headline text-lg font-bold mb-4">${isNew?'Nouvel utilisateur':'Modifier '+esc(user?.userId)}</h3>
+    <form onsubmit="return saveUser(event,${isNew?'true':'false'})" class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">ID</label>
+          <input id="uf-id" type="text" class="input-field" value="${esc(user?.userId||'')}" ${isNew?'':'readonly style="opacity:0.6"'} required/></div>
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Nom complet</label>
+          <input id="uf-nom" type="text" class="input-field" value="${esc(user?.nomComplet||'')}" required/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Rôle</label>
+          <select id="uf-role" class="input-field"><option value="agent" ${user?.role==='agent'?'selected':''}>Agent</option><option value="admin" ${user?.role==='admin'?'selected':''}>Admin</option></select></div>
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Équipe</label>
+          <input id="uf-equipe" type="text" class="input-field" value="${esc(user?.equipe||'')}"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Actif</label>
+          <select id="uf-actif" class="input-field"><option value="oui" ${user?.actif!=='non'?'selected':''}>Oui</option><option value="non" ${user?.actif==='non'?'selected':''}>Non</option></select></div>
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Mot de passe ${isNew?'':'(laisser vide)'}</label>
+          <input id="uf-pw" type="password" class="input-field" ${isNew?'required':''}/></div>
+      </div>
+      ${!isNew&&user?.balance?`
+      <div class="border-t border-outline-variant/20 pt-3">
+        <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Soldes ${user.balance.annee}</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-[10px] text-on-surface-variant uppercase mb-1">Solde initial</label>
+            <input id="uf-solde" type="number" step="0.5" class="input-field" value="${user.balance.soldeInitial||0}"/></div>
+          <div><label class="block text-[10px] text-on-surface-variant uppercase mb-1">Non consommé initial</label>
+            <input id="uf-soldenc" type="number" step="0.5" class="input-field" value="${user.balance.soldeNonConsommeInitial||0}"/></div>
+        </div>
+      </div>`:''}
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1">Enregistrer</button>
+        <button type="button" onclick="closeModal()" class="btn-secondary">Annuler</button>
+      </div>
+    </form>`);
+}
+
+async function saveUser(e, isNew) {
+  e.preventDefault();
+  const payload={userId:$('uf-id').value,nomComplet:$('uf-nom').value,role:$('uf-role').value,equipe:$('uf-equipe').value,actif:$('uf-actif').value,password:$('uf-pw').value};
+  try {
+    await api('apiAdminSaveUser',S.token,payload);
+    // Save balance if fields exist
+    if($('uf-solde')&&!isNew) {
+      await api('apiAdminSetBalance',S.token,{userId:payload.userId,soldeInitial:$('uf-solde').value,soldeNonConsommeInitial:$('uf-soldenc')?.value||0});
+    }
+    closeModal(); toast('Utilisateur enregistré'); loadAdminTab('users');
+  } catch(err) { toast(err.message,false); }
+  return false;
+}
+
+// --- HOLIDAYS ---
+async function loadAdminHolidays(tc) {
+  const r=await api('apiAdminListHolidays',S.token);
+  const items=r.items||[];
+  tc.innerHTML=`
+  <div class="flex justify-between items-center mb-3">
+    <p class="text-xs text-on-surface-variant">${items.length} jour(s) férié(s)</p>
+    <button onclick="showHolidayForm()" class="btn-primary text-xs py-2">Ajouter</button>
+  </div>
+  <div class="space-y-2">
+    ${items.map(i=>`<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg">
+      <div><span class="font-semibold text-sm">${formatDate(i.date)}</span> — <span class="text-on-surface-variant">${esc(i.libelle)}</span></div>
+      <button onclick="deleteHoliday('${esc(i.date)}')" class="btn-ghost text-error text-[10px]">Supprimer</button>
+    </div>`).join('')}
+  </div>`;
+}
+
+function showHolidayForm() {
+  openModal(`<h3 class="font-headline text-lg font-bold mb-4">Ajouter un jour férié</h3>
+    <form onsubmit="return saveHoliday(event)" class="space-y-3">
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Date</label>
+        <input id="hf-date" type="date" class="input-field" required/></div>
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Libellé</label>
+        <input id="hf-label" type="text" class="input-field" required/></div>
+      <div class="flex gap-3 pt-2"><button type="submit" class="btn-primary flex-1">Enregistrer</button><button type="button" onclick="closeModal()" class="btn-secondary">Annuler</button></div>
+    </form>`);
+}
+async function saveHoliday(e) { e.preventDefault(); try { await api('apiAdminSaveHoliday',S.token,{date:$('hf-date').value,libelle:$('hf-label').value}); closeModal(); toast('Jour férié ajouté'); loadAdminTab('holidays'); } catch(err){toast(err.message,false);} return false; }
+async function deleteHoliday(d) { if(!confirm('Supprimer ce jour férié ?'))return; try{await api('apiAdminDeleteHoliday',S.token,d);toast('Supprimé');loadAdminTab('holidays');}catch(e){toast(e.message,false);} }
+
+// --- PARAMS ---
+async function loadAdminParams(tc) {
+  const r=await api('apiAdminGetParams',S.token);
+  const p=r.params||{};
+  tc.innerHTML=`<form onsubmit="return saveParams(event)" class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Max absents / équipe</label>
+        <input id="p-maxabs" type="number" class="input-field" value="${esc(p.maxAbsentsParEquipe||'3')}"/></div>
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Délai min avant congé (j)</label>
+        <input id="p-delai" type="number" class="input-field" value="${esc(p.delaiMinAvantConge||'0')}"/></div>
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Crédit mensuel (j)</label>
+        <input id="p-accrual" type="text" class="input-field" value="${esc(p.accrualMensuelJours||'2.5')}"/></div>
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Vue équipe agents</label>
+        <select id="p-vue" class="input-field"><option value="oui" ${p.vueEquipeAgents==='oui'?'selected':''}>Oui</option><option value="non" ${p.vueEquipeAgents!=='oui'?'selected':''}>Non</option></select></div>
+    </div>
+    <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Types de congés autorisés</label>
+      <input id="p-types" type="text" class="input-field" value="${esc(p.typesCongesAutorises||'')}"/><p class="text-[10px] text-on-surface-variant mt-1">Séparés par des virgules</p></div>
+    <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Modèle mail congé</label>
+      <textarea id="p-mail" class="input-field" rows="6">${esc(p.modeleMailConge||'')}</textarea></div>
+    <button type="submit" class="btn-primary">Enregistrer les paramètres</button>
+  </form>`;
+}
+async function saveParams(e) { e.preventDefault(); try { await api('apiAdminSaveParams',S.token,{maxAbsentsParEquipe:$('p-maxabs').value,delaiMinAvantConge:$('p-delai').value,accrualMensuelJours:$('p-accrual').value,vueEquipeAgents:$('p-vue').value,typesCongesAutorises:$('p-types').value,modeleMailConge:$('p-mail').value}); toast('Paramètres enregistrés'); } catch(err){toast(err.message,false);} return false; }
+
+// --- TEAM RULES ---
+async function loadAdminTeamRules(tc) {
+  const r=await api('apiAdminListTeamRules',S.token);
+  const items=r.items||[];
+  tc.innerHTML=`
+  <div class="flex justify-between items-center mb-3">
+    <p class="text-xs text-on-surface-variant">${items.length} règle(s)</p>
+    <button onclick="showTeamRuleForm()" class="btn-primary text-xs py-2">Ajouter</button>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="data-table">
+      <thead><tr><th>Équipe</th><th>Max dépôt/j</th><th>Délai min</th><th>Max absents/j</th><th>Heure limite</th><th>Actif</th><th></th></tr></thead>
+      <tbody>${items.map(i=>`<tr>
+        <td class="font-semibold">${esc(i.equipe)}</td><td>${i.maxDemandesParJour!==''?i.maxDemandesParJour:'-'}</td><td>${i.delaiMinAvantCongeJours!==''?i.delaiMinAvantCongeJours+'j':'-'}</td><td>${i.maxAbsentsParJour!==''?i.maxAbsentsParJour:'-'}</td><td>${esc(i.heureLimiteDepot)||'-'}</td>
+        <td>${i.actif==='oui'?'<span class="text-[#2ecc71]">Oui</span>':'<span class="text-error">Non</span>'}</td>
+        <td><button onclick="deleteTeamRule('${esc(i.equipe)}')" class="btn-ghost text-error text-[10px]">Supprimer</button></td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+function showTeamRuleForm() {
+  openModal(`<h3 class="font-headline text-lg font-bold mb-4">Ajouter une règle d'équipe</h3>
+    <form onsubmit="return saveTeamRule(event)" class="space-y-3">
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Équipe</label><input id="tr-eq" type="text" class="input-field" required/></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Max dépôts/jour</label><input id="tr-maxd" type="number" class="input-field"/></div>
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Délai min (jours)</label><input id="tr-delai" type="number" class="input-field"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Max absents/jour</label><input id="tr-maxa" type="number" class="input-field"/></div>
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Heure limite (HH:MM)</label><input id="tr-heure" type="time" class="input-field"/></div>
+      </div>
+      <div class="flex gap-3 pt-2"><button type="submit" class="btn-primary flex-1">Enregistrer</button><button type="button" onclick="closeModal()" class="btn-secondary">Annuler</button></div>
+    </form>`);
+}
+async function saveTeamRule(e) { e.preventDefault(); try { await api('apiAdminSaveTeamRule',S.token,{equipe:$('tr-eq').value,maxDemandesParJour:$('tr-maxd').value,delaiMinAvantCongeJours:$('tr-delai').value,maxAbsentsParJour:$('tr-maxa').value,heureLimiteDepot:$('tr-heure').value}); closeModal(); toast('Règle enregistrée'); loadAdminTab('teamrules'); } catch(err){toast(err.message,false);} return false; }
+async function deleteTeamRule(eq) { if(!confirm('Supprimer la règle pour '+eq+' ?'))return; try{await api('apiAdminDeleteTeamRule',S.token,eq);toast('Supprimée');loadAdminTab('teamrules');}catch(e){toast(e.message,false);} }
+
+// --- MODELS ---
+async function loadAdminModels(tc) {
+  const r=await api('apiAdminListShiftModeles',S.token);
+  const items=r.modeles||[];
+  tc.innerHTML=`
+  <div class="flex justify-between items-center mb-3">
+    <p class="text-xs text-on-surface-variant">${items.length} modèle(s)</p>
+    <button onclick="showModeleForm()" class="btn-primary text-xs py-2">Ajouter</button>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+    ${items.map(m=>`<div class="bg-surface-container-low rounded-xl p-4 border-l-4" style="border-left-color:${esc(m.couleur)}">
+      <div class="flex justify-between items-start">
+        <div><p class="font-semibold">${esc(m.nom)}</p><p class="text-xs text-on-surface-variant">${esc(m.heureDebut)} — ${esc(m.heureFin)}</p>
+          ${m.description?'<p class="text-[10px] text-on-surface-variant mt-1">'+esc(m.description)+'</p>':''}</div>
+        <div class="flex gap-1">
+          <button onclick='showModeleForm(${JSON.stringify(m).replace(/'/g,"&#39;")})' class="btn-ghost text-[10px]">Modifier</button>
+          <button onclick="deleteModele('${esc(m.idModele)}')" class="btn-ghost text-error text-[10px]">Suppr.</button>
+        </div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+function showModeleForm(m) {
+  openModal(`<h3 class="font-headline text-lg font-bold mb-4">${m?'Modifier':'Nouveau'} modèle de shift</h3>
+    <form onsubmit="return saveModele(event,'${esc(m?.idModele||'')}')" class="space-y-3">
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Nom</label><input id="mf-nom" type="text" class="input-field" value="${esc(m?.nom||'')}" required/></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Début</label><input id="mf-deb" type="time" class="input-field" value="${esc(m?.heureDebut||'')}" required/></div>
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Fin</label><input id="mf-fin" type="time" class="input-field" value="${esc(m?.heureFin||'')}" required/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Couleur</label><input id="mf-color" type="color" class="input-field h-10" value="${esc(m?.couleur||'#4ea1ff')}"/></div>
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Description</label><input id="mf-desc" type="text" class="input-field" value="${esc(m?.description||'')}"/></div>
+      </div>
+      <div class="flex gap-3 pt-2"><button type="submit" class="btn-primary flex-1">Enregistrer</button><button type="button" onclick="closeModal()" class="btn-secondary">Annuler</button></div>
+    </form>`);
+}
+async function saveModele(e, id) { e.preventDefault(); try { await api('apiAdminSaveShiftModele',S.token,{idModele:id||undefined,nom:$('mf-nom').value,heureDebut:$('mf-deb').value,heureFin:$('mf-fin').value,couleur:$('mf-color').value,description:$('mf-desc').value}); closeModal(); toast('Modèle enregistré'); loadAdminTab('models'); } catch(err){toast(err.message,false);} return false; }
+async function deleteModele(id) { if(!confirm('Supprimer ce modèle ?'))return; try{await api('apiAdminDeleteShiftModele',S.token,id);toast('Supprimé');loadAdminTab('models');}catch(e){toast(e.message,false);} }
+
+function showModelesList() { navigateTo('admin'); S.adminTab='models'; loadAdmin(); }
+
+// --- HISTORY ---
+async function loadAdminHistory(tc) {
+  const r=await api('apiListHistory',S.token,{page:1,pageSize:50});
+  const items=r.items||[];
+  tc.innerHTML=`<p class="text-xs text-on-surface-variant mb-3">${r.total} entrée(s) — page ${r.page}</p>
+  <div class="overflow-x-auto">
+    <table class="data-table">
+      <thead><tr><th>Date</th><th>Action</th><th>Auteur</th><th>Cible</th><th>Détails</th></tr></thead>
+      <tbody>${items.map(i=>`<tr>
+        <td class="text-xs text-on-surface-variant whitespace-nowrap">${formatDateTime(i.dateHeure)}</td>
+        <td class="text-xs font-semibold">${esc(i.action)}</td>
+        <td class="text-xs">${esc(i.auteurUserId)}</td>
+        <td class="text-xs">${esc(i.cibleUserId)}${i.cibleEquipe?' ('+esc(i.cibleEquipe)+')':''}</td>
+        <td class="text-xs text-on-surface-variant max-w-[200px] truncate" title="${esc(i.details)}">${esc(i.details)}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+// ============================================================
+// SHIFT MODAL (Admin - click on planning cell)
+// ============================================================
+async function showShiftModal(userId, date) {
+  if(!isAdmin()) return;
+  let modeles=[];
+  try { const r=await api('apiAdminListShiftModeles',S.token); modeles=r.modeles||[]; } catch(e){}
+
+  openModal(`<h3 class="font-headline text-lg font-bold mb-4">Shift — ${esc(userId)} — ${formatDate(date)}</h3>
+    <form onsubmit="return saveShift(event,'${esc(userId)}','${esc(date)}')" class="space-y-3">
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Modèle (optionnel)</label>
+        <select id="sf-modele" class="input-field" onchange="applyModele(this.value)">
+          <option value="">— Manuel —</option>
+          <option value="OFF">OFF (Jour de repos)</option>
+          ${modeles.map(m=>'<option value="'+esc(m.idModele)+'" data-deb="'+esc(m.heureDebut)+'" data-fin="'+esc(m.heureFin)+'" data-nom="'+esc(m.nom)+'" data-color="'+esc(m.couleur)+'">'+esc(m.nom)+' ('+esc(m.heureDebut)+'-'+esc(m.heureFin)+')</option>').join('')}
+        </select>
+      </div>
+      <div id="sf-times" class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Début</label><input id="sf-deb" type="time" class="input-field"/></div>
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Fin</label><input id="sf-fin" type="time" class="input-field"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Pause début</label><input id="sf-pdeb" type="time" class="input-field"/></div>
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Pause fin</label><input id="sf-pfin" type="time" class="input-field"/></div>
+      </div>
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Notes</label><input id="sf-notes" type="text" class="input-field"/></div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1">Enregistrer</button>
+        <button type="button" onclick="deleteShiftFromModal('${esc(userId)}','${esc(date)}')" class="btn-danger text-xs">Supprimer</button>
+        <button type="button" onclick="closeModal()" class="btn-secondary">Annuler</button>
+      </div>
+    </form>`);
+}
+
+function applyModele(val) {
+  const times=$('sf-times');
+  if(val==='OFF') { times.style.display='none'; return; }
+  times.style.display='grid';
+  const opt=document.querySelector('#sf-modele option[value="'+val+'"]');
+  if(opt&&opt.dataset.deb) { $('sf-deb').value=opt.dataset.deb; $('sf-fin').value=opt.dataset.fin; }
+}
+
+async function saveShift(e, userId, date) {
+  e.preventDefault();
+  const modSel=$('sf-modele');
+  const isOff=modSel.value==='OFF';
+  const opt=modSel.selectedOptions[0];
+  const payload={
+    userId, date,
+    isOff,
+    heureDebut:isOff?'':$('sf-deb').value,
+    heureFin:isOff?'':$('sf-fin').value,
+    pauseDebut:$('sf-pdeb').value,
+    pauseFin:$('sf-pfin').value,
+    nomModele:opt?.dataset?.nom||'',
+    couleurModele:opt?.dataset?.color||'#4ea1ff',
+    notes:$('sf-notes').value
+  };
+  try { await api('apiAdminSaveShift',S.token,payload); closeModal(); toast('Shift enregistré'); loadPlanning(); }
+  catch(err) { toast(err.message,false); }
+  return false;
+}
+
+async function deleteShiftFromModal(userId, date) {
+  // Find shift for this user/date to get its ID
+  try {
+    const r=await api('apiAdminGetPlanning',S.token,{dateDebut:date,dateFin:date,userId});
+    const shift=(r.shifts||[]).find(s=>s.userId.toUpperCase()===userId.toUpperCase()&&s.date===date);
+    if(!shift){toast('Aucun shift à supprimer',false);return;}
+    await api('apiAdminDeleteShift',S.token,shift.idShift);
+    closeModal(); toast('Shift supprimé'); loadPlanning();
+  } catch(e) { toast(e.message,false); }
+}
+
+// ============================================================
+// BULK SHIFT MODAL
+// ============================================================
+function showBulkShiftModal() {
+  openModal(`<h3 class="font-headline text-lg font-bold mb-4">Opérations en masse</h3>
+    <div class="space-y-3">
+      <button onclick="closeModal();showBulkCopyWeek()" class="w-full btn-secondary text-left px-4 py-3 flex items-center gap-3">
+        <span class="material-symbols-outlined text-primary">content_copy</span>
+        <div><p class="font-semibold text-sm">Copier une semaine</p><p class="text-[10px] text-on-surface-variant">Duplique les shifts d'une semaine vers une autre</p></div>
+      </button>
+      <button onclick="closeModal();showBulkApplyModel()" class="w-full btn-secondary text-left px-4 py-3 flex items-center gap-3">
+        <span class="material-symbols-outlined text-primary">auto_fix_high</span>
+        <div><p class="font-semibold text-sm">Appliquer un modèle</p><p class="text-[10px] text-on-surface-variant">Applique un modèle sur une période</p></div>
+      </button>
+      <button onclick="closeModal();showBulkClearWeek()" class="w-full btn-secondary text-left px-4 py-3 flex items-center gap-3">
+        <span class="material-symbols-outlined text-error">delete_sweep</span>
+        <div><p class="font-semibold text-sm">Vider une période</p><p class="text-[10px] text-on-surface-variant">Supprime tous les shifts d'une période</p></div>
+      </button>
+    </div>
+    <button onclick="closeModal()" class="btn-ghost w-full mt-4 text-xs">Fermer</button>`);
+}
+
+function showBulkCopyWeek() {
+  openModal(`<h3 class="font-headline text-lg font-bold mb-4">Copier une semaine</h3>
+    <form onsubmit="return doBulkCopyWeek(event)" class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Lundi source</label><input id="bc-src" type="date" class="input-field" value="${S.planningWeekStart}" required/></div>
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Lundi cible</label><input id="bc-tgt" type="date" class="input-field" value="${addDays(S.planningWeekStart,7)}" required/></div>
+      </div>
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Équipe (vide=toutes)</label><input id="bc-eq" type="text" class="input-field"/></div>
+      <div class="flex gap-3 pt-2"><button type="submit" class="btn-primary flex-1">Copier</button><button type="button" onclick="closeModal()" class="btn-secondary">Annuler</button></div>
+    </form>`);
+}
+async function doBulkCopyWeek(e) { e.preventDefault(); try { const r=await api('apiAdminBulkShifts',S.token,{operation:'copyWeek',sourceDateDebut:$('bc-src').value,targetDateDebut:$('bc-tgt').value,equipe:$('bc-eq').value}); closeModal(); toast('Copie: '+r.created+' créés, '+r.skipped+' ignorés'); loadPlanning(); } catch(err){toast(err.message,false);} return false; }
+
+function showBulkApplyModel() {
+  openModal(`<h3 class="font-headline text-lg font-bold mb-4">Appliquer un modèle</h3>
+    <form onsubmit="return doBulkApplyModel(event)" class="space-y-3">
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">ID Modèle</label><input id="ba-mod" type="text" class="input-field" placeholder="Ex: MOD-XXXXXX" required/></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Date début</label><input id="ba-deb" type="date" class="input-field" value="${S.planningWeekStart}" required/></div>
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Date fin</label><input id="ba-fin" type="date" class="input-field" value="${addDays(S.planningWeekStart,6)}" required/></div>
+      </div>
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Équipe (vide=toutes)</label><input id="ba-eq" type="text" class="input-field"/></div>
+      <label class="flex items-center gap-2 cursor-pointer"><input id="ba-ow" type="checkbox" class="accent-primary"/><span class="text-xs text-on-surface-variant">Écraser les shifts existants</span></label>
+      <div class="flex gap-3 pt-2"><button type="submit" class="btn-primary flex-1">Appliquer</button><button type="button" onclick="closeModal()" class="btn-secondary">Annuler</button></div>
+    </form>`);
+}
+async function doBulkApplyModel(e) { e.preventDefault(); try { const r=await api('apiAdminBulkShifts',S.token,{operation:'applyModel',idModele:$('ba-mod').value,dateDebut:$('ba-deb').value,dateFin:$('ba-fin').value,equipe:$('ba-eq').value,overwrite:$('ba-ow').checked}); closeModal(); toast('Modèle appliqué: '+r.created+' créés, '+(r.updated||0)+' MAJ, '+r.skipped+' ignorés'); loadPlanning(); } catch(err){toast(err.message,false);} return false; }
+
+function showBulkClearWeek() {
+  openModal(`<h3 class="font-headline text-lg font-bold mb-4">Vider une période</h3>
+    <form onsubmit="return doBulkClear(event)" class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Date début</label><input id="bx-deb" type="date" class="input-field" value="${S.planningWeekStart}" required/></div>
+        <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Date fin</label><input id="bx-fin" type="date" class="input-field" value="${addDays(S.planningWeekStart,6)}" required/></div>
+      </div>
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Équipe (vide=toutes)</label><input id="bx-eq" type="text" class="input-field"/></div>
+      <p class="text-xs text-error font-semibold">Attention : cette opération est irréversible.</p>
+      <div class="flex gap-3 pt-2"><button type="submit" class="btn-danger flex-1">Vider</button><button type="button" onclick="closeModal()" class="btn-secondary">Annuler</button></div>
+    </form>`);
+}
+async function doBulkClear(e) { e.preventDefault(); if(!confirm('Confirmer la suppression de tous les shifts ?'))return false; try { const r=await api('apiAdminBulkShifts',S.token,{operation:'clearWeek',dateDebut:$('bx-deb').value,dateFin:$('bx-fin').value,equipe:$('bx-eq').value}); closeModal(); toast(r.deleted+' shifts supprimés'); loadPlanning(); } catch(err){toast(err.message,false);} return false; }
+
+// ============================================================
+// POINTAGE
+// ============================================================
+async function loadMyPointage() {
+  const c=$('planning-content');
+  c.innerHTML=skeleton('200px');
+  try {
+    const r=await api('apiGetMyPointage',S.token,{});
+    const items=r.items||[];
+    let html=`<div class="flex items-center justify-between">
+      <h2 class="font-headline text-lg font-bold tracking-tight">Mon Pointage</h2>
+      <button onclick="loadPlanning()" class="btn-ghost text-xs">Retour au planning</button>
+    </div>
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div class="glass-card rounded-xl p-4 text-center">
+        <p class="font-headline text-2xl font-bold text-primary">${(r.totalHeuresSup||0).toFixed(1)}<span class="text-sm font-light">h</span></p>
+        <p class="text-[10px] text-on-surface-variant uppercase">Heures Sup</p>
+      </div>
+      <div class="glass-card rounded-xl p-4 text-center">
+        <p class="font-headline text-2xl font-bold text-error">${r.totalRetards||0}</p>
+        <p class="text-[10px] text-on-surface-variant uppercase">Retards</p>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Prévu</th><th>Arrivée</th><th>Départ</th><th>Durée</th><th>H.Sup</th><th>Statut</th></tr></thead>
+        <tbody>${items.map(p=>`<tr>
+          <td class="text-xs">${formatDate(p.date)}</td>
+          <td class="text-xs text-on-surface-variant">${p.heurePrevDebut||'-'} — ${p.heurePrevFin||'-'}</td>
+          <td class="text-xs font-semibold">${p.heureArrivee||'-'}</td>
+          <td class="text-xs">${p.heureDepart||'-'}</td>
+          <td class="text-xs">${p.dureeReelle?p.dureeReelle.toFixed(1)+'h':'-'}</td>
+          <td class="text-xs ${p.heuresSup>0?'text-primary font-semibold':''}">${p.heuresSup?p.heuresSup.toFixed(1)+'h':'-'}</td>
+          <td><span class="badge ${p.retardMinutes>5?'badge-rejected':p.statut==='Présent'?'badge-approved':'badge-canceled'}">${esc(p.statut)}</span></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+    c.innerHTML=html;
+  } catch(e) { c.innerHTML='<p class="text-error">'+esc(e.message)+'</p>'; }
+}
+
+async function loadAdminPointage() {
+  const c=$('planning-content');
+  c.innerHTML=skeleton('200px');
+  try {
+    const r=await api('apiAdminListPointage',S.token,{page:1,pageSize:50});
+    const items=r.items||[];
+    let html=`<div class="flex items-center justify-between mb-4">
+      <h2 class="font-headline text-lg font-bold tracking-tight">Pointage (admin)</h2>
+      <div class="flex gap-2">
+        <button onclick="recalcPointage()" class="btn-secondary text-xs py-2">Recalculer</button>
+        <button onclick="loadPlanning()" class="btn-ghost text-xs">Retour</button>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Agent</th><th>Prévu</th><th>Arrivée</th><th>Départ</th><th>Durée</th><th>Retard</th><th>H.Sup</th><th>Statut</th></tr></thead>
+        <tbody>${items.map(p=>`<tr>
+          <td class="text-xs">${formatDate(p.date)}</td>
+          <td class="text-xs font-medium">${esc(p.nomAgent)}</td>
+          <td class="text-xs text-on-surface-variant">${p.heurePrevDebut||'-'} — ${p.heurePrevFin||'-'}</td>
+          <td class="text-xs font-semibold">${p.heureArrivee||'-'}</td>
+          <td class="text-xs">${p.heureDepart||'-'}</td>
+          <td class="text-xs">${p.dureeReelle?p.dureeReelle.toFixed(1)+'h':'-'}</td>
+          <td class="text-xs ${p.retardMinutes>5?'text-error font-semibold':''}">${p.retardMinutes>0?p.retardMinutes+'min':'-'}</td>
+          <td class="text-xs ${p.heuresSup>0?'text-primary font-semibold':''}">${p.heuresSup?p.heuresSup.toFixed(1)+'h':'-'}</td>
+          <td><span class="badge ${p.retardMinutes>5?'badge-rejected':p.statut==='Présent'?'badge-approved':'badge-canceled'}">${esc(p.statut)}</span></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+    c.innerHTML=html;
+  } catch(e) { c.innerHTML='<p class="text-error">'+esc(e.message)+'</p>'; }
+}
+
+async function recalcPointage() {
+  try { const r=await api('apiAdminRecalculatePointage',S.token,{}); toast(r.updated+' lignes recalculées'); loadAdminPointage(); }
+  catch(e) { toast(e.message,false); }
+}
+
+// ============================================================
+// SWAP REQUESTS
+// ============================================================
+async function showSwapRequests() {
+  try {
+    const r=await api('apiListShiftSwapRequests',S.token,{page:1,pageSize:30});
+    const items=r.items||[];
+    let html=`<h3 class="font-headline text-lg font-bold mb-4">Demandes d'échange</h3>`;
+    if(items.length===0) html+='<p class="text-sm text-on-surface-variant italic">Aucune demande d\'échange</p>';
+    else {
+      html+=items.map(s=>`<div class="p-3 bg-surface-container-low rounded-lg mb-2">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-sm font-semibold">${esc(s.requesterNom)} <span class="text-on-surface-variant">↔</span> ${esc(s.targetNom)}</p>
+            <p class="text-xs text-on-surface-variant">Date: ${formatDate(s.dateShift)}</p>
+            ${s.requesterComment?'<p class="text-[10px] text-on-surface-variant italic mt-1">'+esc(s.requesterComment)+'</p>':''}
+          </div>
+          <div class="text-right">
+            ${statusBadge(s.statut)}
+            ${isAdmin()&&s.statut==='En attente'?`<div class="flex gap-1 mt-2">
+              <button onclick="processSwap('${esc(s.idSwap)}','approve')" class="p-1 rounded bg-[#2ecc71]/10 hover:bg-[#2ecc71]/20"><span class="material-symbols-outlined text-[#2ecc71] text-sm">check</span></button>
+              <button onclick="processSwap('${esc(s.idSwap)}','reject')" class="p-1 rounded bg-error/10 hover:bg-error/20"><span class="material-symbols-outlined text-error text-sm">close</span></button>
+            </div>`:''}
+            ${!isAdmin()&&s.statut==='En attente'&&s.requesterUserId.toUpperCase()===S.user.userId.toUpperCase()?
+              '<button onclick="cancelSwap(\''+esc(s.idSwap)+'\')" class="btn-ghost text-error text-[10px] mt-1">Annuler</button>':''}
+          </div>
+        </div>
+      </div>`).join('');
+    }
+    html+='<button onclick="closeModal()" class="btn-ghost w-full mt-4 text-xs">Fermer</button>';
+    openModal(html);
+  } catch(e) { toast(e.message,false); }
+}
+async function processSwap(id, action) { try { await api('apiAdminProcessShiftSwap',S.token,{idSwap:id,action}); toast('Échange '+(action==='approve'?'validé':'refusé')); closeModal(); showSwapRequests(); } catch(e){toast(e.message,false);} }
+async function cancelSwap(id) { try { await api('apiCancelShiftSwap',S.token,id); toast('Échange annulé'); closeModal(); showSwapRequests(); } catch(e){toast(e.message,false);} }
+
+// ============================================================
+// PASSWORD MODAL
+// ============================================================
+function showPasswordModal() {
+  openModal(`<h3 class="font-headline text-lg font-bold mb-4">Changer le mot de passe</h3>
+    <form onsubmit="return changePassword(event)" class="space-y-3">
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Mot de passe actuel</label><input id="cp-cur" type="password" class="input-field" required/></div>
+      <div><label class="block text-xs font-semibold text-on-surface-variant uppercase mb-1">Nouveau mot de passe</label><input id="cp-new" type="password" class="input-field" required minlength="6"/></div>
+      <div class="flex gap-3 pt-2"><button type="submit" class="btn-primary flex-1">Changer</button><button type="button" onclick="closeModal()" class="btn-secondary">Annuler</button></div>
+    </form>`);
+}
+async function changePassword(e) { e.preventDefault(); try { await api('apiChangePassword',S.token,$('cp-cur').value,$('cp-new').value); closeModal(); toast('Mot de passe changé'); } catch(err){toast(err.message,false);} return false; }
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(html) { $('modal-content').innerHTML=html; $('modal').classList.add('open'); }
+function closeModal() { $('modal').classList.remove('open'); }
+
+// ============================================================
+// BOOT
+// ============================================================
+(async function boot() {
+  const hasSession=await checkSession();
+  if(hasSession) await initApp();
+  else {
+    $('view-login').style.display='flex';
+    $('view-login').style.opacity='1';
+  }
+})();
+</script>
+</body>
+</html>
