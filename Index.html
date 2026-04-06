@@ -412,11 +412,11 @@ select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Cs
     <div class="glass p-6 mb-6">
       <div class="flex flex-wrap items-center gap-3 mb-5">
         <h3 class="font-headline font-semibold text-lg mr-auto">Planning Admin</h3>
-        <button onclick="showBulkModal('copyWeek')" class="btn-ghost text-xs"><span class="material-symbols-outlined text-base align-middle mr-1">content_copy</span>Copier semaine</button>
-        <button onclick="showBulkModal('applyModel')" class="btn-ghost text-xs"><span class="material-symbols-outlined text-base align-middle mr-1">auto_fix_high</span>Appliquer modèle</button>
-        <button onclick="showBulkModal('clearWeek')" class="btn-danger text-xs"><span class="material-symbols-outlined text-base align-middle mr-1">delete_sweep</span>Vider semaine</button>
-        <button onclick="showBulkModal('assignShift')" class="btn-ghost text-xs"><span class="material-symbols-outlined text-base align-middle mr-1">person_add</span>Assigner shift</button>
-        <button onclick="assignToSelected()" class="btn-primary text-xs"><span class="material-symbols-outlined text-base align-middle mr-1">group_add</span>Planifier sélection</button>
+        <button onclick="showPlanWeekModal()" class="btn-primary text-xs"><span class="material-symbols-outlined text-base align-middle mr-1">event_note</span>Planifier semaine</button>
+        <button onclick="showAssignShiftModal()" class="btn-ghost text-xs"><span class="material-symbols-outlined text-base align-middle mr-1">person_add</span>Assigner shift</button>
+        <button onclick="showCopyWeekModal()" class="btn-ghost text-xs"><span class="material-symbols-outlined text-base align-middle mr-1">content_copy</span>Copier semaine</button>
+        <button onclick="showClearWeekModal()" class="btn-danger text-xs"><span class="material-symbols-outlined text-base align-middle mr-1">delete_sweep</span>Vider semaine</button>
+        <button onclick="showSetOffModal()" class="btn-ghost text-xs"><span class="material-symbols-outlined text-base align-middle mr-1">bed</span>Jours OFF</button>
       </div>
       <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div class="flex items-center gap-3">
@@ -721,7 +721,7 @@ async function initApp(){
   navigateTo(S.currentView);startClock();
 }
 function populateTeamFilters(teams){['groupPlanTeamFilter','adminPlanTeamFilter','presenceTeamFilter','adminPtgTeam','overtimeTeam','validationTeamFilter','agentTemplateTeam','calendarTeamFilter'].forEach(id=>{const s=el(id);if(!s)return;const v=s.value;s.innerHTML='<option value="">Toutes équipes</option>'+teams.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');s.value=v;});}
-function populateAgentSelectors(users){const active=users.filter(u=>u.actif==='Oui'||u.actif===true).sort((a,b)=>(a.nomComplet||'').localeCompare(b.nomComplet||''));const opts=active.map(u=>`<option value="${esc(u.userId)}">${esc(u.nomComplet)} (${esc(u.userId)})</option>`).join('');['leaveAgentId','quickLeaveAgent'].forEach(id=>{const s=el(id);if(s)s.innerHTML='<option value="">— Pour moi-même —</option>'+opts;});}
+function populateAgentSelectors(users){const active=users.filter(u=>String(u.actif||'').toLowerCase()==='oui'||u.actif===true).sort((a,b)=>(a.nomComplet||'').localeCompare(b.nomComplet||''));const opts=active.map(u=>`<option value="${esc(u.userId)}">${esc(u.nomComplet)} (${esc(u.userId)})</option>`).join('');['leaveAgentId','quickLeaveAgent'].forEach(id=>{const s=el(id);if(s)s.innerHTML='<option value="">— Pour moi-même —</option>'+opts;});}
 
 /* =========== NAV =========== */
 function navigateTo(view){S.currentView=view;document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===view));el('viewTitle').textContent={conges:'Congés',planning:'Planning',pointage:'Pointage',admin:'Administration'}[view]||view;document.querySelectorAll('.view-section').forEach(s=>s.style.display='none');const v=el('view'+view.charAt(0).toUpperCase()+view.slice(1));if(v){v.style.display='block';v.classList.add('fade-in');}loadViewData(view);}
@@ -923,12 +923,19 @@ async function loadAdminPlanning(){
 }
 function adminPlanWeekNav(dir){S.adminPlanWeek=addDays(S.adminPlanWeek,dir*7);loadAdminPlanning();}
 
-/* Fixed renderPlanGrid - handles shiftsByUser as object properly */
+/* renderPlanGrid - shows shifts AND leave status */
 function renderPlanGrid(data,monday,container,editable){
-  const days=weekDays(monday);const shifts=data.shifts||[];
-  // Build shiftsByUser - always rebuild from shifts array to avoid type issues
+  const days=weekDays(monday);const shifts=data.shifts||[];const leaves=data.leaves||[];
   const byUser={};
   shifts.forEach(s=>{const k=s.userId;if(!byUser[k])byUser[k]=[];byUser[k].push(s);});
+  // Build leave map by user+date
+  const leaveMap={};
+  leaves.forEach(l=>{
+    const sd=String(l.dateDebut||'').slice(0,10),ed=String(l.dateFin||'').slice(0,10);
+    if(!sd)return;const sp=sd.split('-'),ep=(ed||sd).split('-');
+    let cur=new Date(+sp[0],+sp[1]-1,+sp[2]);const endD=new Date(+ep[0],+ep[1]-1,+ep[2]);
+    while(cur<=endD){const k=l.userId+'_'+isoDate(cur);leaveMap[k]=l;cur=addDays(cur,1);}
+  });
   const users=data.users||data.agents||[];
   let agentList=users.map(u=>({userId:u.userId,nom:u.nomAgent||u.nomComplet||u.userId,equipe:u.equipe}));
   const knownIds=new Set(agentList.map(a=>a.userId));
@@ -942,8 +949,12 @@ function renderPlanGrid(data,monday,container,editable){
     const uShifts=byUser[ag.userId]||[];
     const sMap={};uShifts.forEach(s=>{const d=isoDate(s.date);if(!sMap[d])sMap[d]=[];sMap[d].push(s);});
     html+=`<tr class="table-row border-b border-outline-var/10"><td class="py-2 px-2 font-medium whitespace-nowrap">${esc(ag.nom)}<div class="text-[10px] text-on-surface-var">${esc(ag.equipe||'')}</div></td>`;
-    days.forEach(d=>{const dt=isoDate(d),ds=sMap[dt]||[];html+='<td class="py-1 px-1 text-center">';
-      if(ds.length){ds.forEach(s=>{if(s.isOff==='Oui'||s.isOff===true)html+='<div class="shift-cell bg-outline-var/20 text-on-surface-var">OFF</div>';
+    days.forEach(d=>{const dt=isoDate(d),ds=sMap[dt]||[];const lv=leaveMap[ag.userId+'_'+dt];html+='<td class="py-1 px-1 text-center">';
+      if(lv){
+        const isBad=lv.statut==='En attente';
+        html+=`<div class="shift-cell ${isBad?'bg-primary/15 text-primary border-primary/30':'bg-secondary/15 text-secondary border-secondary/30'}" title="${esc(lv.typeConge+' - '+lv.statut)}"><span class="material-symbols-outlined text-xs align-middle">beach_access</span> ${isBad?'Att.':'Congé'}</div>`;
+      }
+      else if(ds.length){ds.forEach(s=>{if(s.isOff==='Oui'||s.isOff===true)html+='<div class="shift-cell bg-outline-var/20 text-on-surface-var">OFF</div>';
         else{const bg=s.couleurModele?`background:${s.couleurModele}25;color:${s.couleurModele};border-color:${s.couleurModele}40`:'';const ck=editable?`onclick="showShiftModal('${esc(s.idShift)}')"`:'';html+=`<div class="shift-cell mb-0.5" style="${bg}" ${ck}>${fmtTime(s.heureDebut)}-${fmtTime(s.heureFin)}</div>`;}});}
       else{if(editable)html+=`<div class="shift-cell bg-outline-var/10 text-on-surface-var/40 cursor-pointer" onclick="showShiftModal(null,'${dt}','${esc(ag.userId)}')">+</div>`;else html+='<div class="text-on-surface-var/30">—</div>';}
       html+='</td>';});html+='</tr>';});
@@ -973,17 +984,152 @@ async function loadAgentTemplates(){
 function toggleAgentSelect(id,chip){if(S.selectedAgents.has(id)){S.selectedAgents.delete(id);chip.classList.remove('selected');}else{S.selectedAgents.add(id);chip.classList.add('selected');}}
 function selectAllAgents(){el('agentTemplatesContainer').querySelectorAll('.agent-chip').forEach(c=>{const id=c.querySelector('.font-mono')?.textContent;if(id){S.selectedAgents.add(id);c.classList.add('selected');}});}
 function deselectAllAgents(){S.selectedAgents.clear();el('agentTemplatesContainer').querySelectorAll('.agent-chip').forEach(c=>c.classList.remove('selected'));}
-function assignToSelected(){
-  if(!S.selectedAgents.size)return toast('Sélectionnez des agents','error');
-  if(!S.models.length){api('apiAdminListShiftModeles',S.token).then(r=>{S.models=r.modeles||[];assignToSelected();});return;}
+/* ===== ENHANCED PLANNING TOOLS ===== */
+async function ensureModelsLoaded(){if(!S.models.length){try{const r=await api('apiAdminListShiftModeles',S.token);S.models=r.modeles||[];}catch(e){}}}
+function selectedAgentNames(){return[...S.selectedAgents].map(id=>{const u=S.users.find(x=>x.userId===id);return u?u.nomComplet:id;});}
+
+/* 1. Planifier semaine — apply model+pause to selected agents */
+async function showPlanWeekModal(){
+  if(!S.selectedAgents.size)return toast('Sélectionnez des agents en haut','error');
+  await ensureModelsLoaded();
   const opts=S.models.map(m=>`<option value="${esc(m.idModele)}">${esc(m.nom)} (${fmtTime(m.heureDebut)}-${fmtTime(m.heureFin)})</option>`).join('');
-  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Planifier ${S.selectedAgents.size} agents</h3><div class="space-y-3">
-    <div><label class="text-xs text-on-surface-var mb-1 block">Modèle</label><select id="batchModel" class="input-field">${opts}</select></div>
-    <div><label class="text-xs text-on-surface-var mb-1 block">Semaine (lundi)</label><input id="batchWeek" type="date" class="input-field" value="${isoDate(S.adminPlanWeek)}"></div>
-    <div class="text-xs text-on-surface-var">Agents: ${[...S.selectedAgents].join(', ')}</div>
-    <button onclick="doBatchAssign()" class="btn-primary w-full">Appliquer</button></div>`);
+  const names=selectedAgentNames();
+  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Planifier semaine — ${S.selectedAgents.size} agents</h3>
+    <div class="space-y-4">
+      <div class="glass-sm p-3"><div class="text-xs text-on-surface-var mb-1">Agents sélectionnés</div><div class="flex flex-wrap gap-1">${names.map(n=>`<span class="badge badge-approved text-xs">${esc(n)}</span>`).join('')}</div></div>
+      <div><label class="text-xs text-on-surface-var mb-1 block">Modèle de shift</label><select id="pwModel" class="input-field">${opts}</select></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs text-on-surface-var mb-1 block">Date début</label><input id="pwDateDebut" type="date" class="input-field" value="${isoDate(S.adminPlanWeek)}"></div>
+        <div><label class="text-xs text-on-surface-var mb-1 block">Date fin</label><input id="pwDateFin" type="date" class="input-field" value="${isoDate(addDays(S.adminPlanWeek,6))}"></div>
+      </div>
+      <div><label class="text-xs text-on-surface-var mb-1 block">Jours (1=Lun,...,7=Dim)</label><input id="pwJours" class="input-field" value="1,2,3,4,5" placeholder="1,2,3,4,5"></div>
+      <div class="flex items-center gap-3"><input id="pwOverwrite" type="checkbox" class="accent-primary"><label class="text-sm">Écraser les shifts existants</label></div>
+      <div class="glass-sm p-3 text-xs text-on-surface-var"><span class="material-symbols-outlined text-sm align-middle mr-1">info</span>Les agents en congé validé sont automatiquement ignorés.</div>
+      <button onclick="doPlanWeek()" id="pwBtn" class="btn-primary w-full">Appliquer le planning</button>
+    </div>`);
 }
-async function doBatchAssign(){const idModele=el('batchModel')?.value,w=el('batchWeek')?.value;let ok=0;for(const uid of S.selectedAgents){try{await api('apiAdminBulkShifts',S.token,{operation:'applyModel',idModele,cibleLundi:w,userId:uid});ok++;}catch(e){toast(`${uid}: ${e.message}`,'error');}}toast(`${ok} agents planifiés`,'success');closeModal();loadAdminPlanning();}
+async function doPlanWeek(){
+  const btn=el('pwBtn');btn.disabled=true;btn.textContent='En cours...';
+  try{
+    const r=await api('apiAdminBulkShifts',S.token,{
+      operation:'applyModel',
+      idModele:el('pwModel').value,
+      dateDebut:el('pwDateDebut').value,
+      dateFin:el('pwDateFin').value,
+      userIds:[...S.selectedAgents],
+      joursSemaine:el('pwJours').value,
+      overwrite:el('pwOverwrite').checked
+    });
+    toast(`${r.created||0} créés, ${r.updated||0} maj, ${r.skipped||0} ignorés (congés/existants)`,'success');
+    closeModal();loadAdminPlanning();
+  }catch(e){toast(e.message,'error');btn.disabled=false;btn.textContent='Appliquer le planning';}
+}
+
+/* 2. Assigner shift individuel avec pause */
+function showAssignShiftModal(){
+  const agentOpts=S.users.filter(u=>String(u.actif||'').toLowerCase()==='oui'||u.actif===true).map(u=>`<option value="${esc(u.userId)}">${esc(u.nomComplet)} (${esc(u.userId)})</option>`).join('');
+  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Assigner un shift</h3>
+    <div class="space-y-3">
+      <div><label class="text-xs text-on-surface-var mb-1 block">Agent</label><select id="asAgent" class="input-field"><option value="">— Choisir —</option>${agentOpts}</select></div>
+      <div><label class="text-xs text-on-surface-var mb-1 block">Date</label><input id="asDate" type="date" class="input-field"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs text-on-surface-var mb-1 block">Début</label><input id="asDB" type="time" class="input-field" value="08:00"></div>
+        <div><label class="text-xs text-on-surface-var mb-1 block">Fin</label><input id="asFN" type="time" class="input-field" value="17:00"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs text-on-surface-var mb-1 block">Pause début</label><input id="asPD" type="time" class="input-field" value="12:00"></div>
+        <div><label class="text-xs text-on-surface-var mb-1 block">Pause fin</label><input id="asPF" type="time" class="input-field" value="13:00"></div>
+      </div>
+      <div class="flex items-center gap-3"><input id="asOff" type="checkbox" class="accent-primary"><label class="text-sm">Jour OFF</label></div>
+      <div><label class="text-xs text-on-surface-var mb-1 block">Notes</label><input id="asNotes" class="input-field" placeholder="Optionnel"></div>
+      <button onclick="doAssignShift()" class="btn-primary w-full">Assigner</button>
+    </div>`);
+}
+async function doAssignShift(){
+  const p={userId:el('asAgent').value,date:el('asDate').value,heureDebut:el('asDB').value,heureFin:el('asFN').value,pauseDebut:el('asPD').value,pauseFin:el('asPF').value,isOff:el('asOff').checked?'Oui':'Non',notes:el('asNotes').value};
+  if(!p.userId||!p.date)return toast('Agent et date requis','error');
+  try{await api('apiAdminSaveShift',S.token,p);toast('Shift assigné','success');closeModal();loadAdminPlanning();}catch(e){toast(e.message,'error');}
+}
+
+/* 3. Copier semaine */
+function showCopyWeekModal(){
+  const hasSelection=S.selectedAgents.size>0;
+  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Copier une semaine</h3>
+    <div class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs text-on-surface-var mb-1 block">Source (lundi)</label><input id="cwSrc" type="date" class="input-field" value="${isoDate(S.adminPlanWeek)}"></div>
+        <div><label class="text-xs text-on-surface-var mb-1 block">Cible (lundi)</label><input id="cwTgt" type="date" class="input-field" value="${isoDate(addDays(S.adminPlanWeek,7))}"></div>
+      </div>
+      <div><label class="text-xs text-on-surface-var mb-1 block">Équipe (optionnel)</label><select id="cwEquipe" class="input-field"><option value="">Toutes</option>${S.teams.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}</select></div>
+      ${hasSelection?`<div class="glass-sm p-3 text-xs text-on-surface-var"><span class="material-symbols-outlined text-sm align-middle mr-1">check_circle</span>Limité aux ${S.selectedAgents.size} agents sélectionnés</div>`:'<div class="text-xs text-on-surface-var">Aucun agent sélectionné = copie pour tous</div>'}
+      <div class="glass-sm p-3 text-xs text-on-surface-var"><span class="material-symbols-outlined text-sm align-middle mr-1">info</span>Les agents en congé validé sont automatiquement ignorés.</div>
+      <button onclick="doCopyWeek()" id="cwBtn" class="btn-primary w-full">Copier</button>
+    </div>`);
+}
+async function doCopyWeek(){
+  const btn=el('cwBtn');btn.disabled=true;btn.textContent='Copie en cours...';
+  try{
+    const p={operation:'copyWeek',sourceDateDebut:el('cwSrc').value,targetDateDebut:el('cwTgt').value};
+    if(el('cwEquipe').value)p.equipe=el('cwEquipe').value;
+    if(S.selectedAgents.size)p.userIds=[...S.selectedAgents];
+    const r=await api('apiAdminBulkShifts',S.token,p);
+    toast(`${r.created||0} shifts copiés, ${r.skipped||0} ignorés`,'success');
+    closeModal();loadAdminPlanning();
+  }catch(e){toast(e.message,'error');btn.disabled=false;btn.textContent='Copier';}
+}
+
+/* 4. Vider semaine */
+function showClearWeekModal(){
+  const hasSelection=S.selectedAgents.size>0;
+  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Vider une semaine</h3>
+    <div class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs text-on-surface-var mb-1 block">Date début</label><input id="clrD" type="date" class="input-field" value="${isoDate(S.adminPlanWeek)}"></div>
+        <div><label class="text-xs text-on-surface-var mb-1 block">Date fin</label><input id="clrF" type="date" class="input-field" value="${isoDate(addDays(S.adminPlanWeek,6))}"></div>
+      </div>
+      <div><label class="text-xs text-on-surface-var mb-1 block">Équipe</label><select id="clrEquipe" class="input-field"><option value="">Toutes</option>${S.teams.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}</select></div>
+      ${hasSelection?`<div class="glass-sm p-3 text-xs text-on-surface-var"><span class="material-symbols-outlined text-sm align-middle mr-1">check_circle</span>Limité aux ${S.selectedAgents.size} agents sélectionnés</div>`:''}
+      <div class="glass-sm p-3 text-xs text-error"><span class="material-symbols-outlined text-sm align-middle mr-1">warning</span>Cette action supprimera tous les shifts de la période sélectionnée.</div>
+      <button onclick="doClearWeek()" id="clrBtn" class="btn-danger w-full">Confirmer la suppression</button>
+    </div>`);
+}
+async function doClearWeek(){
+  const btn=el('clrBtn');btn.disabled=true;btn.textContent='Suppression...';
+  try{
+    const p={operation:'clearWeek',dateDebut:el('clrD').value,dateFin:el('clrF').value};
+    if(el('clrEquipe').value)p.equipe=el('clrEquipe').value;
+    if(S.selectedAgents.size)p.userIds=[...S.selectedAgents];
+    const r=await api('apiAdminBulkShifts',S.token,p);
+    toast(`${r.deleted||0} shifts supprimés`,'success');
+    closeModal();loadAdminPlanning();
+  }catch(e){toast(e.message,'error');btn.disabled=false;btn.textContent='Confirmer la suppression';}
+}
+
+/* 5. Jours OFF en masse */
+function showSetOffModal(){
+  if(!S.selectedAgents.size)return toast('Sélectionnez des agents en haut','error');
+  const names=selectedAgentNames();
+  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Jours OFF — ${S.selectedAgents.size} agents</h3>
+    <div class="space-y-3">
+      <div class="glass-sm p-3"><div class="text-xs text-on-surface-var mb-1">Agents</div><div class="flex flex-wrap gap-1">${names.map(n=>`<span class="badge badge-pending text-xs">${esc(n)}</span>`).join('')}</div></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs text-on-surface-var mb-1 block">Date début</label><input id="offD" type="date" class="input-field"></div>
+        <div><label class="text-xs text-on-surface-var mb-1 block">Date fin</label><input id="offF" type="date" class="input-field"></div>
+      </div>
+      <div><label class="text-xs text-on-surface-var mb-1 block">Notes</label><input id="offN" class="input-field" placeholder="Ex: repos compensatoire"></div>
+      <button onclick="doSetOff()" id="offBtn" class="btn-primary w-full">Appliquer OFF</button>
+    </div>`);
+}
+async function doSetOff(){
+  const dD=el('offD').value,dF=el('offF').value||dD;
+  if(!dD)return toast('Date requise','error');
+  const btn=el('offBtn');btn.disabled=true;btn.textContent='En cours...';
+  let ok=0;
+  const sp=dD.split('-'),ep=dF.split('-');let cur=new Date(+sp[0],+sp[1]-1,+sp[2]);const end=new Date(+ep[0],+ep[1]-1,+ep[2]);
+  const dates=[];while(cur<=end){dates.push(isoDate(cur));cur=addDays(cur,1);}
+  for(const uid of S.selectedAgents){for(const dt of dates){try{await api('apiAdminSaveShift',S.token,{userId:uid,date:dt,heureDebut:'00:00',heureFin:'00:00',isOff:'Oui',notes:el('offN').value});ok++;}catch(e){}}}
+  toast(`${ok} jours OFF créés`,'success');closeModal();loadAdminPlanning();
+}
 
 /* Admin Swaps */
 async function loadAdminSwaps(){try{const r=await api('apiListShiftSwapRequests',S.token,{});const items=r.items||[];if(!items.length){el('adminSwapContainer').innerHTML='<div class="text-center text-on-surface-var py-4">Aucune demande</div>';return;}el('adminSwapContainer').innerHTML=items.map(s=>renderSwapCard(s,true)).join('');}catch(e){}}
@@ -997,9 +1143,11 @@ async function doRejectSwap(id){try{await api('apiAdminProcessShiftSwap',S.token
 async function loadPresence(){const equipe=el('presenceTeamFilter')?.value;try{const r=await api('apiGetPresenceOverview',S.token,{date:isoDate(new Date()),equipe});const agents=r.overview||[];const stats=r.stats||{};
   el('presenceKpis').innerHTML=[{l:'Présents',v:stats.presents||0,c:'text-tertiary',i:'check_circle'},{l:'Absents',v:stats.absents||0,c:'text-error',i:'cancel'},{l:'Congé',v:stats.enConge||0,c:'text-secondary',i:'beach_access'},{l:'Non planifié',v:stats.nonPlanifie||0,c:'text-on-surface-var',i:'event_busy'}].map(k=>`<div class="glass-sm p-4 kpi-card ${k.c}"><span class="material-symbols-outlined text-lg mb-1">${k.i}</span><div class="text-xl font-headline font-bold">${k.v}</div><div class="text-[11px] text-on-surface-var">${k.l}</div></div>`).join('');
   if(!agents.length){el('presenceCards').innerHTML='<div class="col-span-full text-center text-on-surface-var py-6">Aucun agent</div>';return;}
-  el('presenceCards').innerHTML=agents.map(a=>{const sc={'Présent':'border-tertiary/30 bg-tertiary/5','En retard':'border-primary/30 bg-primary/5','Absent':'border-error/30 bg-error/5','Congé':'border-secondary/30 bg-secondary/5'};const dc={'Présent':'bg-tertiary','En retard':'bg-primary','Absent':'bg-error','Congé':'bg-secondary'};const ptg=a.pointage||{};
+  const sc={'Présent':'border-tertiary/30 bg-tertiary/5','En retard':'border-primary/30 bg-primary/5','Absent':'border-error/30 bg-error/5','Congé':'border-secondary/30 bg-secondary/5','Non planifié':'','OFF':'border-outline-var/20 bg-outline-var/5'};
+  const dc={'Présent':'bg-tertiary','En retard':'bg-primary','Absent':'bg-error','Congé':'bg-secondary','Non planifié':'bg-outline-var','OFF':'bg-outline-var'};
+  el('presenceCards').innerHTML=agents.map(a=>{const ptg=a.pointage||{};const sh=a.shift||{};const shiftTxt=sh.nomModele?esc(sh.nomModele)+' '+fmtTime(sh.heureDebut)+'-'+fmtTime(sh.heureFin):(sh.heureDebut?fmtTime(sh.heureDebut)+'-'+fmtTime(sh.heureFin):'');const detailStr=typeof a.details==='string'?a.details:(a.details?JSON.stringify(a.details):'');
     return`<div class="glass-sm p-4 border ${sc[a.statut]||''}"><div class="flex items-center gap-3 mb-2"><span class="presence-dot ${dc[a.statut]||'bg-outline-var'}"></span><span class="font-medium text-sm">${esc(a.nomAgent||a.userId)}</span><span class="text-[11px] text-on-surface-var ml-auto">${esc(a.equipe||'')}</span></div>
-      <div class="text-xs text-on-surface-var">${a.details||''} ${ptg.heureArrivee?'Arr: '+fmtTime(ptg.heureArrivee):''} ${ptg.heureDepart?'Dép: '+fmtTime(ptg.heureDepart):''} ${ptg.retardMinutes?`<span class="text-error">(${ptg.retardMinutes}min)</span>`:''}</div></div>`;}).join('');
+      <div class="text-xs text-on-surface-var">${shiftTxt?shiftTxt+' ':''}${detailStr?esc(detailStr)+' ':''}${ptg.heureArrivee?'Arr: '+fmtTime(ptg.heureArrivee)+' ':''}${ptg.heureDepart?'Dép: '+fmtTime(ptg.heureDepart)+' ':''}${ptg.retardMinutes?`<span class="text-error">(${ptg.retardMinutes}min)</span>`:''}</div></div>`;}).join('');
 }catch(e){toast(e.message,'error');}}
 
 
@@ -1020,9 +1168,9 @@ async function loadAdminPresenceOverview(){
     if(!agents.length){el('ptgPresenceCards').innerHTML='<div class="col-span-full text-center text-on-surface-var py-4">Aucun agent</div>';return;}
     const sc={'Présent':'border-tertiary/30 bg-tertiary/5','En retard':'border-primary/30 bg-primary/5','Absent':'border-error/30 bg-error/5','Congé':'border-secondary/30 bg-secondary/5','Non planifié':'border-outline-var/30','OFF':'border-outline-var/30 bg-outline-var/5'};
     const dc={'Présent':'bg-tertiary','En retard':'bg-primary','Absent':'bg-error','Congé':'bg-secondary','Non planifié':'bg-outline-var','OFF':'bg-outline-var'};
-    el('ptgPresenceCards').innerHTML=agents.map(a=>{const ptg=a.pointage||{};
+    el('ptgPresenceCards').innerHTML=agents.map(a=>{const ptg=a.pointage||{};const sh=a.shift||{};const shiftTxt=sh.nomModele?esc(sh.nomModele)+' '+fmtTime(sh.heureDebut)+'-'+fmtTime(sh.heureFin):(sh.heureDebut?fmtTime(sh.heureDebut)+'-'+fmtTime(sh.heureFin):'');const detailStr=typeof a.details==='string'?a.details:'';
       return`<div class="glass-sm p-3 border ${sc[a.statut]||''}"><div class="flex items-center gap-2 mb-1"><span class="presence-dot ${dc[a.statut]||'bg-outline-var'}"></span><span class="font-medium text-xs">${esc(a.nomAgent||a.userId)}</span><span class="text-[10px] text-on-surface-var ml-auto">${esc(a.equipe||'')}</span></div>
-        <div class="text-[11px] text-on-surface-var">${a.shift?esc(a.shift):''} ${ptg.heureArrivee?'| Arr: '+fmtTime(ptg.heureArrivee):''} ${ptg.heureDepart?'| Dép: '+fmtTime(ptg.heureDepart):''} ${ptg.retardMinutes?`<span class="text-error">(${ptg.retardMinutes}min ret.)</span>`:''}</div></div>`;}).join('');
+        <div class="text-[11px] text-on-surface-var">${shiftTxt?shiftTxt+' ':''}${detailStr?esc(detailStr)+' ':''}${ptg.heureArrivee?'Arr: '+fmtTime(ptg.heureArrivee)+' ':''}${ptg.heureDepart?'Dép: '+fmtTime(ptg.heureDepart)+' ':''}${ptg.retardMinutes?`<span class="text-error">(${ptg.retardMinutes}min ret.)</span>`:''}</div></div>`;}).join('');
   }catch(e){el('ptgPresenceKpis').innerHTML='';el('ptgPresenceCards').innerHTML=`<div class="col-span-full text-center text-error py-4">${esc(e.message)}</div>`;}
 }
 async function loadAdminPointage(){loadAdminPresenceOverview();const equipe=el('adminPtgTeam')?.value,df=el('adminPtgDateFrom')?.value,dt=el('adminPtgDateTo')?.value;const f={};if(equipe)f.equipe=equipe;if(df)f.dateDebut=df;if(dt)f.dateFin=dt;
@@ -1174,14 +1322,6 @@ async function doSaveRule(){const p={equipe:el('mrE').value.trim(),maxDemandesPa
 function showShiftModal(idShift,date,userId){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">${idShift?'Modifier':'Nouveau'} shift</h3><div class="space-y-3"><div><label class="text-xs text-on-surface-var mb-1 block">Agent (ID)</label><input id="msU" class="input-field" value="${esc(userId||'')}" placeholder="ID"></div><div><label class="text-xs text-on-surface-var mb-1 block">Date</label><input id="msD" type="date" class="input-field" value="${date||''}"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs text-on-surface-var mb-1 block">Début</label><input id="msDB" type="time" class="input-field" value="08:00"></div><div><label class="text-xs text-on-surface-var mb-1 block">Fin</label><input id="msFN" type="time" class="input-field" value="17:00"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs text-on-surface-var mb-1 block">Pause début</label><input id="msPD" type="time" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Pause fin</label><input id="msPF" type="time" class="input-field"></div></div><div class="flex items-center gap-3"><input id="msOff" type="checkbox" class="accent-primary"><label class="text-sm">OFF</label></div><div><label class="text-xs text-on-surface-var mb-1 block">Notes</label><input id="msN" class="input-field"></div><div class="flex gap-3"><button onclick="doSaveShift('${esc(idShift||'')}')" class="btn-primary flex-1">Enregistrer</button>${idShift?`<button onclick="doDelShift('${esc(idShift)}')" class="btn-danger flex-1">Suppr</button>`:''}</div></div>`);}
 async function doSaveShift(id){const p={userId:el('msU').value.trim().toUpperCase(),date:el('msD').value,heureDebut:el('msDB').value,heureFin:el('msFN').value,pauseDebut:el('msPD').value,pauseFin:el('msPF').value,isOff:el('msOff').checked?'Oui':'Non',notes:el('msN').value};if(id)p.idShift=id;if(!p.userId||!p.date)return toast('Agent et date requis','error');try{await api('apiAdminSaveShift',S.token,p);toast('OK','success');closeModal();loadAdminPlanning();}catch(e){toast(e.message,'error');}}
 async function doDelShift(id){if(!confirm('Supprimer ?'))return;try{await api('apiAdminDeleteShift',S.token,id);toast('Supprimé','success');closeModal();loadAdminPlanning();}catch(e){toast(e.message,'error');}}
-
-function showBulkModal(op){const t={copyWeek:'Copier semaine',applyModel:'Appliquer modèle',clearWeek:'Vider semaine',assignShift:'Assigner shift'};let f='';
-  if(op==='copyWeek')f=`<div><label class="text-xs text-on-surface-var mb-1 block">Source (lundi)</label><input id="bkS" type="date" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Cible (lundi)</label><input id="bkT" type="date" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Équipe</label><input id="bkE" class="input-field"></div>`;
-  else if(op==='applyModel'){const o=S.models.map(m=>`<option value="${esc(m.idModele)}">${esc(m.nom)}</option>`).join('');f=`<div><label class="text-xs text-on-surface-var mb-1 block">Modèle</label><select id="bkM" class="input-field">${o}</select></div><div><label class="text-xs text-on-surface-var mb-1 block">Semaine (lundi)</label><input id="bkT" type="date" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Agent ID</label><input id="bkU" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Équipe</label><input id="bkE" class="input-field"></div>`;}
-  else if(op==='clearWeek')f=`<div><label class="text-xs text-on-surface-var mb-1 block">Semaine (lundi)</label><input id="bkT" type="date" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Équipe</label><input id="bkE" class="input-field"></div>`;
-  else if(op==='assignShift')f=`<div><label class="text-xs text-on-surface-var mb-1 block">Agent ID</label><input id="bkU" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Date</label><input id="bkDt" type="date" class="input-field"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs text-on-surface-var mb-1 block">Début</label><input id="bkDB" type="time" class="input-field" value="08:00"></div><div><label class="text-xs text-on-surface-var mb-1 block">Fin</label><input id="bkFN" type="time" class="input-field" value="17:00"></div></div>`;
-  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">${t[op]}</h3><div class="space-y-3">${f}<button onclick="doBulk('${op}')" class="btn-primary w-full">Exécuter</button></div>`);}
-async function doBulk(op){const p={operation:op};if(op==='copyWeek'){p.sourceLundi=el('bkS')?.value;p.cibleLundi=el('bkT')?.value;p.equipe=el('bkE')?.value;}else if(op==='applyModel'){p.idModele=el('bkM')?.value;p.cibleLundi=el('bkT')?.value;p.userId=el('bkU')?.value?.trim()?.toUpperCase();p.equipe=el('bkE')?.value;}else if(op==='clearWeek'){p.cibleLundi=el('bkT')?.value;p.equipe=el('bkE')?.value;if(!confirm('Vider ?'))return;}else if(op==='assignShift'){p.userId=el('bkU')?.value?.trim()?.toUpperCase();p.date=el('bkDt')?.value;p.heureDebut=el('bkDB')?.value;p.heureFin=el('bkFN')?.value;}try{await api('apiAdminBulkShifts',S.token,p);toast('OK','success');closeModal();loadAdminPlanning();}catch(e){toast(e.message,'error');}}
 
 function showAdjustPtgModal(id){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Ajuster pointage</h3><div class="space-y-3"><div><label class="text-xs text-on-surface-var mb-1 block">Arrivée</label><input id="ajA" type="time" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Départ</label><input id="ajD" type="time" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Notes</label><input id="ajN" class="input-field"></div><button onclick="doAdjPtg('${esc(id)}')" class="btn-primary w-full">Ajuster</button></div>`);}
 async function doAdjPtg(id){try{await api('apiAdminAdjustPointage',S.token,{idPointage:id,heureArrivee:el('ajA').value,heureDepart:el('ajD').value,notes:el('ajN').value});toast('OK','success');closeModal();loadAdminPointage();}catch(e){toast(e.message,'error');}}
