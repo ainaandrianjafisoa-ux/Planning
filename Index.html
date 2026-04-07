@@ -52,11 +52,20 @@ body{font-family:'Inter',sans-serif;background:var(--body-bg);color:var(--on-sur
 .glass-sm{background:var(--glass-sm-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-sm-border);border-radius:12px;transition:background .3s,border-color .3s}
 .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-ctr));color:var(--on-primary);font-weight:600;border-radius:12px;padding:10px 24px;transition:all .2s}
 .btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-primary:active{transform:scale(0.95);filter:brightness(0.95);transition:transform .1s}
 .btn-primary:disabled{opacity:.5;pointer-events:none}
 .btn-ghost{background:rgba(242,202,80,0.08);color:var(--primary);font-weight:500;border-radius:10px;padding:8px 18px;border:1px solid rgba(242,202,80,0.15);transition:all .2s}
 .btn-ghost:hover{background:rgba(242,202,80,0.15)}
+.btn-ghost:active{transform:scale(0.95);transition:transform .1s}
 .btn-danger{background:rgba(255,180,171,0.1);color:var(--error);font-weight:500;border-radius:10px;padding:8px 18px;border:1px solid rgba(255,180,171,0.2);transition:all .2s}
 .btn-danger:hover{background:rgba(255,180,171,0.2)}
+.btn-danger:active{transform:scale(0.95);transition:transform .1s}
+@keyframes btnPulse{0%{box-shadow:0 0 0 0 rgba(242,202,80,0.4)}70%{box-shadow:0 0 0 10px rgba(242,202,80,0)}100%{box-shadow:0 0 0 0 rgba(242,202,80,0)}}
+.btn-pulse{animation:btnPulse .5s ease-out}
+.tab-btn:active{transform:scale(0.96);transition:transform .1s}
+.nav-item:active{transform:scale(0.97);transition:transform .08s}
+.agent-chip:active{transform:scale(0.96);transition:transform .1s}
+.shift-cell:active{transform:scale(0.93);transition:transform .08s}
 .input-field{background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;padding:10px 14px;color:var(--on-surface);font-size:14px;transition:border-color .2s,background .3s;width:100%}
 .input-field:focus{outline:none;border-color:var(--primary)}
 .input-field::placeholder{color:var(--outline)}
@@ -513,11 +522,20 @@ select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Cs
           <button onclick="doRecalcPointage()" class="btn-ghost text-xs"><span class="material-symbols-outlined text-base align-middle mr-1">calculate</span>Recalculer</button>
         </div>
       </div>
+      <!-- Bulk actions bar -->
+      <div class="flex items-center gap-3 mb-3 flex-wrap" id="ptgBulkBar" style="display:none">
+        <span class="text-xs text-on-surface-var" id="ptgBulkCount">0 sélectionnés</span>
+        <button onclick="showBulkAdjustModal()" class="btn-ghost text-xs"><span class="material-symbols-outlined text-base align-middle mr-1">edit</span>Rectifier sélection</button>
+        <button onclick="showBulkValidateModal()" class="btn-primary text-xs"><span class="material-symbols-outlined text-base align-middle mr-1">check_circle</span>Valider sélection</button>
+        <button onclick="ptgSelectAll()" class="btn-ghost text-xs">Tout sélectionner</button>
+        <button onclick="ptgDeselectAll()" class="btn-ghost text-xs">Désélectionner</button>
+      </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm"><thead><tr class="text-left text-on-surface-var text-xs border-b border-outline-var/20">
+          <th class="pb-3 pr-2 w-8"><input type="checkbox" class="accent-primary" onchange="ptgToggleAll(this.checked)"></th>
           <th class="pb-3 pr-4">Agent</th><th class="pb-3 pr-4">Équipe</th><th class="pb-3 pr-4">Date</th><th class="pb-3 pr-4">Prévu</th>
           <th class="pb-3 pr-4">Arrivée</th><th class="pb-3 pr-4">Départ</th><th class="pb-3 pr-4">Retard</th><th class="pb-3 pr-4">Statut</th><th class="pb-3">Actions</th>
-        </tr></thead><tbody id="adminPtgBody"><tr><td colspan="9" class="py-8 text-center text-on-surface-var">Chargement...</td></tr></tbody></table>
+        </tr></thead><tbody id="adminPtgBody"><tr><td colspan="10" class="py-8 text-center text-on-surface-var">Chargement...</td></tr></tbody></table>
       </div>
     </div>
   </div>
@@ -716,6 +734,8 @@ function api(fn,...args){
 
 /* =========== TOAST =========== */
 function toast(msg,type='info'){const b=el('toastBox'),t=document.createElement('div');t.className=`toast toast-${type}`;t.textContent=msg;b.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},4000);}
+/* Button pulse on click */
+document.addEventListener('click',e=>{const btn=e.target.closest('.btn-primary,.btn-ghost,.btn-danger');if(btn&&!btn.disabled){btn.classList.remove('btn-pulse');void btn.offsetWidth;btn.classList.add('btn-pulse');setTimeout(()=>btn.classList.remove('btn-pulse'),500);}});
 
 /* =========== THEME =========== */
 function toggleTheme(){const h=document.documentElement,cur=h.getAttribute('data-theme'),next=cur==='dark'?'light':'dark';h.setAttribute('data-theme',next);el('themeBtn').innerHTML=`<span class="material-symbols-outlined text-xl">${next==='dark'?'light_mode':'dark_mode'}</span>`;sessionStorage.setItem('theme',next);}
@@ -1184,7 +1204,7 @@ async function loadPresence(){const equipe=el('presenceTeamFilter')?.value;try{c
 /* =========== POINTAGE =========== */
 async function doQuickClockIn(){try{await api('apiPointageClockIn',S.token,{});toast('Arrivée enregistrée','success');}catch(e){toast(e.message,'error');}}
 async function doQuickClockOut(){try{await api('apiPointageClockOut',S.token,{});toast('Départ enregistré','success');}catch(e){toast(e.message,'error');}}
-async function loadMyPointage(){const df=el('myPtgDateFrom')?.value,dt=el('myPtgDateTo')?.value;const f={};if(df)f.dateDebut=df;if(dt)f.dateFin=dt;
+async function loadMyPointage(){const df=el('myPtgDateFrom')?.value,dt=el('myPtgDateTo')?.value;const f={pageSize:200};if(df)f.dateDebut=df;if(dt)f.dateFin=dt;
   try{const r=await api('apiGetMyPointage',S.token,f);const items=r.items||[];
     const hSup=r.totalHeuresSup||items.reduce((a,p)=>a+(parseFloat(p.heuresSup)||0),0);const ret=r.totalRetards||items.reduce((a,p)=>a+(parseInt(p.retardMinutes)||0),0);
     el('myPtgStats').innerHTML=[{l:'Jours',v:items.length,i:'event_available',c:'text-primary'},{l:'H. Sup',v:(typeof hSup==='number'?hSup.toFixed(1):hSup)+'h',i:'more_time',c:'text-primary'},{l:'Retard',v:ret+'min',i:'timer_off',c:'text-error'},{l:'Aujourd\'hui',v:r.todayPointage?fmtTime(r.todayPointage.heureArrivee)||'—':'—',i:'today',c:'text-tertiary'}].map(k=>`<div class="glass-sm p-4 kpi-card ${k.c}"><span class="material-symbols-outlined text-lg mb-1">${k.i}</span><div class="text-xl font-headline font-bold">${k.v}</div><div class="text-[11px] text-on-surface-var">${k.l}</div></div>`).join('');
@@ -1203,14 +1223,17 @@ async function loadAdminPresenceOverview(){
         <div class="text-[11px] text-on-surface-var">${shiftTxt?shiftTxt+' ':''}${detailStr?esc(detailStr)+' ':''}${ptg.heureArrivee?'Arr: '+fmtTime(ptg.heureArrivee)+' ':''}${ptg.heureDepart?'Dép: '+fmtTime(ptg.heureDepart)+' ':''}${ptg.retardMinutes?`<span class="text-error">(${ptg.retardMinutes}min ret.)</span>`:''}</div></div>`;}).join('');
   }catch(e){el('ptgPresenceKpis').innerHTML='';el('ptgPresenceCards').innerHTML=`<div class="col-span-full text-center text-error py-4">${esc(e.message)}</div>`;}
 }
-async function loadAdminPointage(){loadAdminPresenceOverview();const equipe=el('adminPtgTeam')?.value,df=el('adminPtgDateFrom')?.value,dt=el('adminPtgDateTo')?.value;const f={};if(equipe)f.equipe=equipe;if(df)f.dateDebut=df;if(dt)f.dateFin=dt;
+async function loadAdminPointage(){loadAdminPresenceOverview();const equipe=el('adminPtgTeam')?.value,df=el('adminPtgDateFrom')?.value,dt=el('adminPtgDateTo')?.value;const f={pageSize:500};if(equipe)f.equipe=equipe;if(df)f.dateDebut=df;if(dt)f.dateFin=dt;
   try{const r=await api('apiAdminListPointage',S.token,f);const items=r.items||[];
-    if(!items.length){el('adminPtgBody').innerHTML='<tr><td colspan="9" class="py-8 text-center text-on-surface-var">Aucun pointage</td></tr>';return;}
-    el('adminPtgBody').innerHTML=items.map(p=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4">${esc(p.nomAgent)}</td><td class="py-3 pr-4">${esc(p.equipe)}</td><td class="py-3 pr-4">${fmtDate(p.date)}</td><td class="py-3 pr-4">${fmtTime(p.heurePrevDebut)}-${fmtTime(p.heurePrevFin)}</td><td class="py-3 pr-4">${fmtTime(p.heureArrivee)||'—'}</td><td class="py-3 pr-4">${fmtTime(p.heureDepart)||'—'}</td><td class="py-3 pr-4 ${(p.retardMinutes||0)>0?'text-error':''}">${p.retardMinutes||0}min</td><td class="py-3 pr-4">${statusBadge(p.statut||'—')}</td><td class="py-3"><button onclick="showAdjustPtgModal('${esc(p.idPointage)}')" class="text-primary text-xs hover:underline">Ajuster</button></td></tr>`).join('');
+    if(!items.length){el('adminPtgBody').innerHTML='<tr><td colspan="10" class="py-8 text-center text-on-surface-var">Aucun pointage</td></tr>';el('ptgBulkBar').style.display='none';return;}
+    S.ptgItems=items;S.ptgSelected=new Set();
+    el('adminPtgBody').innerHTML=items.map((p,i)=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-2"><input type="checkbox" class="accent-primary ptg-chk" data-idx="${i}" onchange="ptgCheckChanged()"></td><td class="py-3 pr-4">${esc(p.nomAgent)}</td><td class="py-3 pr-4">${esc(p.equipe)}</td><td class="py-3 pr-4">${fmtDate(p.date)}</td><td class="py-3 pr-4">${fmtTime(p.heurePrevDebut)}-${fmtTime(p.heurePrevFin)}</td><td class="py-3 pr-4">${fmtTime(p.heureArrivee)||'—'}</td><td class="py-3 pr-4">${fmtTime(p.heureDepart)||'—'}</td><td class="py-3 pr-4 ${(p.retardMinutes||0)>0?'text-error':''}">${p.retardMinutes||0}min</td><td class="py-3 pr-4">${statusBadge(p.statut||'—')}</td><td class="py-3"><button onclick="showAdjustPtgModal('${esc(p.idPointage)}')" class="text-primary text-xs hover:underline">Ajuster</button></td></tr>`).join('');
+    el('ptgBulkBar').style.display='none';
   }catch(e){toast(e.message,'error');}}
 async function doRecalcPointage(){const df=el('adminPtgDateFrom')?.value;try{await api('apiAdminRecalculatePointage',S.token,{dateDebut:df});toast('Recalculé','success');loadAdminPointage();}catch(e){toast(e.message,'error');}}
-async function loadOvertime(){const equipe=el('overtimeTeam')?.value,annee=parseInt(el('overtimeYear')?.value)||new Date().getFullYear();const f={annee};if(equipe)f.userId=equipe;
-  try{const r=await api('apiGetOvertimeSummary',S.token,f);const items=r.summary||[];
+async function loadOvertime(){const equipe=el('overtimeTeam')?.value,annee=parseInt(el('overtimeYear')?.value)||new Date().getFullYear();const f={annee};
+  try{const r=await api('apiGetOvertimeSummary',S.token,f);let items=r.summary||[];
+    if(equipe)items=items.filter(a=>(a.equipe||'').toUpperCase()===equipe.toUpperCase());
     if(!items.length){el('overtimeBody').innerHTML='<tr><td colspan="7" class="py-8 text-center text-on-surface-var">Aucune donnée</td></tr>';return;}
     el('overtimeBody').innerHTML=items.map(a=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4">${esc(a.nomAgent||a.userId)}</td><td class="py-3 pr-4">${esc(a.equipe||'')}</td><td class="py-3 pr-4">${esc(a.mois||'')}</td><td class="py-3 pr-4">${a.nbJours||0}</td><td class="py-3 pr-4 ${(a.totalHSup||0)>0?'text-primary font-medium':''}">${a.totalHSup||0}h</td><td class="py-3 pr-4 ${(a.totalRetardMin||0)>0?'text-error':''}">${a.totalRetardMin||0}</td><td class="py-3">${a.nbRetards||0}</td></tr>`).join('');
   }catch(e){toast(e.message,'error');}}
@@ -1343,7 +1366,30 @@ function showValidationModal(id){
       <div class="flex gap-3"><button onclick="doValidateLeave('${esc(id)}')" class="btn-primary flex-1">Confirmer la validation</button><button onclick="closeModal()" class="btn-ghost flex-1">Annuler</button></div>
     </div>`);
 }
-async function doValidateLeave(id){const mode=document.querySelector('input[name="valImputation"]:checked')?.value||'normal';const comment=el('valComment')?.value||'';try{await api('apiProcessLeave',S.token,{idDemande:id,action:'validate',commentaire:comment,modeValidation:mode});toast('Validée','success');closeModal();loadValidation();}catch(e){toast(e.message,'error');}}
+async function doValidateLeave(id){const mode=document.querySelector('input[name="valImputation"]:checked')?.value||'normal';const comment=el('valComment')?.value||'';try{await api('apiProcessLeave',S.token,{idDemande:id,action:'validate',commentaire:comment,modeValidation:mode});toast('Validée','success');closeModal();loadValidation();showMailPreview(id,comment);}catch(e){toast(e.message,'error');}}
+
+async function showMailPreview(idDemande,commentaire){
+  try{
+    const r=await api('apiGetLeaveDetails',S.token,idDemande);const l=r.item||r;
+    // Get mail template from config or use default
+    let tpl='';
+    try{const pr=await api('apiAdminGetParams',S.token);tpl=(pr.params||{}).modeleMailConge||'';}catch(e){}
+    if(!tpl)tpl='Objet : Congé - {{equipe}} - {{userId}} - {{nomAgent}}\n\nBonjour,\n\nMerci d\'enregistrer le congé de l\'ambassadeur suivant :\nMatricule : {{userId}}\nNom : {{nomAgent}}\nDate de départ : {{dateDebut}}\nDate de retour : {{dateRetour}}\n\nCordialement,';
+    // Normalize param value if it's a date object string
+    tpl=normalizeParamValue(tpl);
+    // Compute dateRetour = dateFin + 1 day
+    let dateRetour='';
+    if(l.dateFin){const sp=String(l.dateFin).slice(0,10).split('-');const d=new Date(+sp[0],+sp[1]-1,+sp[2]);d.setDate(d.getDate()+1);dateRetour=isoDate(d);}
+    const mail=tpl.replace(/\{\{nomAgent\}\}/g,l.nomAgent||'').replace(/\{\{userId\}\}/g,l.userId||'').replace(/\{\{typeConge\}\}/g,l.typeConge||'').replace(/\{\{dateDebut\}\}/g,l.dateDebut||'').replace(/\{\{dateFin\}\}/g,l.dateFin||'').replace(/\{\{dateRetour\}\}/g,dateRetour).replace(/\{\{nbJours\}\}/g,String(l.nbJours||'')).replace(/\{\{equipe\}\}/g,l.equipe||'').replace(/\{\{commentaireAdmin\}\}/g,commentaire||'').replace(/\{\{annee\}\}/g,l.dateDebut?String(l.dateDebut).slice(0,4):'');
+    openModal(`<h3 class="font-headline font-semibold text-lg mb-4"><span class="material-symbols-outlined text-primary align-middle mr-2">mail</span>Mail de validation</h3>
+      <div class="glass-sm p-4 mb-4 text-sm font-mono whitespace-pre-wrap leading-relaxed" id="mailPreviewText">${esc(mail)}</div>
+      <div class="flex gap-3">
+        <button onclick="copyMailToClipboard()" class="btn-primary flex-1"><span class="material-symbols-outlined text-base align-middle mr-1">content_copy</span>Copier le mail</button>
+        <button onclick="closeModal()" class="btn-ghost flex-1">Fermer</button>
+      </div>`);
+  }catch(e){}
+}
+function copyMailToClipboard(){const txt=el('mailPreviewText')?.innerText;if(txt){navigator.clipboard.writeText(txt).then(()=>toast('Mail copié','success')).catch(()=>{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('Mail copié','success');});}}
 async function processLeave(id,action){if(action==='validate')return showValidationModal(id);try{await api('apiProcessLeave',S.token,{idDemande:id,action,commentaire:''});toast('Traitée','success');loadValidation();}catch(e){toast(e.message,'error');}}
 
 /* Themed rejection modal instead of prompt() */
@@ -1460,6 +1506,75 @@ async function doDelShift(id){if(!confirm('Supprimer ?'))return;try{await api('a
 
 function showAdjustPtgModal(id){openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Ajuster pointage</h3><div class="space-y-3"><div><label class="text-xs text-on-surface-var mb-1 block">Arrivée</label><input id="ajA" type="time" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Départ</label><input id="ajD" type="time" class="input-field"></div><div><label class="text-xs text-on-surface-var mb-1 block">Notes</label><input id="ajN" class="input-field"></div><button onclick="doAdjPtg('${esc(id)}')" class="btn-primary w-full">Ajuster</button></div>`);}
 async function doAdjPtg(id){try{await api('apiAdminAdjustPointage',S.token,{idPointage:id,heureArrivee:el('ajA').value,heureDepart:el('ajD').value,notes:el('ajN').value});toast('OK','success');closeModal();loadAdminPointage();}catch(e){toast(e.message,'error');}}
+
+/* Bulk pointage selection */
+function ptgCheckChanged(){
+  const chks=document.querySelectorAll('.ptg-chk');S.ptgSelected=new Set();
+  chks.forEach(c=>{if(c.checked)S.ptgSelected.add(parseInt(c.dataset.idx));});
+  const n=S.ptgSelected.size;
+  el('ptgBulkBar').style.display=n?'flex':'none';
+  el('ptgBulkCount').textContent=n+' sélectionné'+(n>1?'s':'');
+}
+function ptgToggleAll(checked){document.querySelectorAll('.ptg-chk').forEach(c=>{c.checked=checked;});ptgCheckChanged();}
+function ptgSelectAll(){ptgToggleAll(true);}
+function ptgDeselectAll(){ptgToggleAll(false);}
+
+function showBulkAdjustModal(){
+  if(!S.ptgSelected.size)return toast('Sélectionnez des pointages','error');
+  const items=[...S.ptgSelected].map(i=>S.ptgItems[i]).filter(Boolean);
+  const names=[...new Set(items.map(p=>p.nomAgent))].join(', ');
+  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Rectifier ${items.length} pointages</h3>
+    <div class="space-y-3">
+      <div class="glass-sm p-3 text-xs text-on-surface-var"><span class="material-symbols-outlined text-sm align-middle mr-1">people</span>${esc(names)}</div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs text-on-surface-var mb-1 block">Arrivée</label><input id="bkAjA" type="time" class="input-field" placeholder="Laisser vide = ne pas modifier"></div>
+        <div><label class="text-xs text-on-surface-var mb-1 block">Départ</label><input id="bkAjD" type="time" class="input-field" placeholder="Laisser vide = ne pas modifier"></div>
+      </div>
+      <div><label class="text-xs text-on-surface-var mb-1 block">Notes</label><input id="bkAjN" class="input-field" placeholder="Optionnel"></div>
+      <div class="glass-sm p-3 text-xs text-on-surface-var"><span class="material-symbols-outlined text-sm align-middle mr-1">info</span>Les champs laissés vides ne seront pas modifiés.</div>
+      <button onclick="doBulkAdjust()" id="bkAjBtn" class="btn-primary w-full">Rectifier</button>
+    </div>`);
+}
+async function doBulkAdjust(){
+  const btn=el('bkAjBtn');btn.disabled=true;btn.textContent='En cours...';
+  const arr=el('bkAjA').value,dep=el('bkAjD').value,notes=el('bkAjN').value;
+  let ok=0;
+  for(const i of S.ptgSelected){
+    const p=S.ptgItems[i];if(!p)continue;
+    const payload={idPointage:p.idPointage};
+    if(arr)payload.heureArrivee=arr;if(dep)payload.heureDepart=dep;
+    if(notes)payload.notes=notes;
+    try{await api('apiAdminAdjustPointage',S.token,payload);ok++;}catch(e){}
+  }
+  toast(`${ok} pointages rectifiés`,'success');closeModal();loadAdminPointage();
+}
+
+function showBulkValidateModal(){
+  if(!S.ptgSelected.size)return toast('Sélectionnez des pointages','error');
+  const items=[...S.ptgSelected].map(i=>S.ptgItems[i]).filter(Boolean);
+  const names=[...new Set(items.map(p=>p.nomAgent))].join(', ');
+  openModal(`<h3 class="font-headline font-semibold text-lg mb-4">Valider ${items.length} pointages</h3>
+    <div class="space-y-3">
+      <div class="glass-sm p-3 text-xs text-on-surface-var"><span class="material-symbols-outlined text-sm align-middle mr-1">people</span>${esc(names)}</div>
+      <div class="glass-sm p-3">
+        <table class="w-full text-xs"><thead><tr class="text-on-surface-var"><th class="text-left pb-1">Agent</th><th class="text-left pb-1">Date</th><th class="text-left pb-1">Arr.</th><th class="text-left pb-1">Dép.</th><th class="text-left pb-1">Retard</th></tr></thead>
+        <tbody>${items.slice(0,20).map(p=>`<tr><td class="py-0.5">${esc(p.nomAgent)}</td><td>${fmtDate(p.date)}</td><td>${fmtTime(p.heureArrivee)||'—'}</td><td>${fmtTime(p.heureDepart)||'—'}</td><td class="${(p.retardMinutes||0)>0?'text-error':''}">${p.retardMinutes||0}min</td></tr>`).join('')}
+        ${items.length>20?`<tr><td colspan="5" class="text-on-surface-var py-1">+${items.length-20} autres...</td></tr>`:''}
+        </tbody></table>
+      </div>
+      <div><label class="text-xs text-on-surface-var mb-1 block">Commentaire</label><input id="bkValN" class="input-field" placeholder="Optionnel"></div>
+      <button onclick="doBulkValidate()" id="bkValBtn" class="btn-primary w-full">Confirmer la validation</button>
+    </div>`);
+}
+async function doBulkValidate(){
+  const btn=el('bkValBtn');btn.disabled=true;btn.textContent='En cours...';
+  const notes=el('bkValN').value;let ok=0;
+  for(const i of S.ptgSelected){
+    const p=S.ptgItems[i];if(!p)continue;
+    try{await api('apiAdminAdjustPointage',S.token,{idPointage:p.idPointage,statut:'Validé',notes});ok++;}catch(e){}
+  }
+  toast(`${ok} pointages validés`,'success');closeModal();loadAdminPointage();
+}
 
 /* =========== BOOT =========== */
 (async function(){el('diamondBg').classList.add('animating');const ok=await checkSession();if(ok)await initApp();else el('loginView').style.display='flex';el('diamondBg').classList.remove('animating');})();
