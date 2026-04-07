@@ -461,6 +461,7 @@ select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Cs
     <button class="tab-btn active" data-subtab="ptg-my" onclick="switchSubTab('pointage','ptg-my')">Mon pointage</button>
     <button class="tab-btn admin-only" data-subtab="ptg-admin" onclick="switchSubTab('pointage','ptg-admin')" style="display:none">Pointage admin</button>
     <button class="tab-btn admin-only" data-subtab="ptg-overtime" onclick="switchSubTab('pointage','ptg-overtime')" style="display:none">H. Supplémentaires</button>
+    <button class="tab-btn admin-only" data-subtab="ptg-rapport" onclick="switchSubTab('pointage','ptg-rapport')" style="display:none">Rapport</button>
   </div>
   <div id="sub-ptg-my" class="subtab-content">
     <div class="glass p-6 mb-6">
@@ -534,6 +535,29 @@ select.input-field{appearance:none;background-image:url("data:image/svg+xml,%3Cs
           <th class="pb-3 pr-4">Agent</th><th class="pb-3 pr-4">Équipe</th><th class="pb-3 pr-4">Mois</th>
           <th class="pb-3 pr-4">Jours</th><th class="pb-3 pr-4">H. Sup</th><th class="pb-3 pr-4">Retard (min)</th><th class="pb-3">Nb retards</th>
         </tr></thead><tbody id="overtimeBody"><tr><td colspan="7" class="py-8 text-center text-on-surface-var">Chargement...</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+  <!-- Rapport -->
+  <div id="sub-ptg-rapport" class="subtab-content" style="display:none">
+    <div class="glass p-6">
+      <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
+        <h3 class="font-headline font-semibold text-lg">Rapport de pointage</h3>
+        <div class="flex items-center gap-2 flex-wrap">
+          <select id="rptTeam" class="input-field !w-auto !py-2 text-xs" onchange="loadRapport()"><option value="">Toutes équipes</option></select>
+          <input id="rptDateFrom" type="date" class="input-field !w-auto !py-2 text-xs">
+          <input id="rptDateTo" type="date" class="input-field !w-auto !py-2 text-xs">
+          <button onclick="loadRapport()" class="btn-primary text-xs !py-2"><span class="material-symbols-outlined text-base align-middle mr-1">assessment</span>Générer</button>
+          <button onclick="exportRapportPDF()" class="btn-ghost text-xs !py-2"><span class="material-symbols-outlined text-base align-middle mr-1">picture_as_pdf</span>Export PDF</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="rptKpis"></div>
+      <div class="overflow-x-auto" id="rptTableContainer">
+        <table class="w-full text-sm" id="rptTable"><thead><tr class="text-left text-on-surface-var text-xs border-b border-outline-var/20">
+          <th class="pb-3 pr-4">Agent</th><th class="pb-3 pr-4">Équipe</th><th class="pb-3 pr-4">Jours pointés</th>
+          <th class="pb-3 pr-4">Jours prévus</th><th class="pb-3 pr-4">H. Travaillées</th><th class="pb-3 pr-4">H. Supp</th>
+          <th class="pb-3 pr-4">Retard total</th><th class="pb-3 pr-4">Nb retards</th><th class="pb-3">Taux présence</th>
+        </tr></thead><tbody id="rptBody"><tr><td colspan="9" class="py-8 text-center text-on-surface-var">Sélectionnez une période et cliquez Générer</td></tr></tbody></table>
       </div>
     </div>
   </div>
@@ -720,14 +744,14 @@ async function initApp(){
   if(isAdmin){try{const ur=await api('apiAdminListUsers',S.token);S.users=ur.users||[];S.teams=[...new Set(S.users.map(u=>u.equipe).filter(Boolean))].sort();populateTeamFilters(S.teams);populateAgentSelectors(S.users);}catch(e){}}
   navigateTo(S.currentView);startClock();
 }
-function populateTeamFilters(teams){['groupPlanTeamFilter','adminPlanTeamFilter','presenceTeamFilter','adminPtgTeam','overtimeTeam','validationTeamFilter','agentTemplateTeam','calendarTeamFilter'].forEach(id=>{const s=el(id);if(!s)return;const v=s.value;s.innerHTML='<option value="">Toutes équipes</option>'+teams.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');s.value=v;});}
+function populateTeamFilters(teams){['groupPlanTeamFilter','adminPlanTeamFilter','presenceTeamFilter','adminPtgTeam','overtimeTeam','validationTeamFilter','agentTemplateTeam','calendarTeamFilter','rptTeam'].forEach(id=>{const s=el(id);if(!s)return;const v=s.value;s.innerHTML='<option value="">Toutes équipes</option>'+teams.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');s.value=v;});}
 function populateAgentSelectors(users){const active=users.filter(u=>String(u.actif||'').toLowerCase()==='oui'||u.actif===true).sort((a,b)=>(a.nomComplet||'').localeCompare(b.nomComplet||''));const opts=active.map(u=>`<option value="${esc(u.userId)}">${esc(u.nomComplet)} (${esc(u.userId)})</option>`).join('');['leaveAgentId','quickLeaveAgent'].forEach(id=>{const s=el(id);if(s)s.innerHTML='<option value="">— Pour moi-même —</option>'+opts;});}
 
 /* =========== NAV =========== */
 function navigateTo(view){S.currentView=view;document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===view));el('viewTitle').textContent={conges:'Congés',planning:'Planning',pointage:'Pointage',admin:'Administration'}[view]||view;document.querySelectorAll('.view-section').forEach(s=>s.style.display='none');const v=el('view'+view.charAt(0).toUpperCase()+view.slice(1));if(v){v.style.display='block';v.classList.add('fade-in');}loadViewData(view);}
 function switchSubTab(view,sub){S.currentSubTabs[view]=sub;const v=el('view'+view.charAt(0).toUpperCase()+view.slice(1));if(!v)return;v.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.subtab===sub));v.querySelectorAll('.subtab-content').forEach(c=>c.style.display='none');const s=el('sub-'+sub);if(s){s.style.display='block';s.classList.add('fade-in');}loadSubTabData(sub);}
 function loadViewData(view){const d={conges:'conges-new',planning:'plan-my',pointage:'ptg-my',admin:'adm-validation'};switchSubTab(view,S.currentSubTabs[view]||d[view]);}
-function loadSubTabData(sub){const m={'conges-new':loadBalance,'conges-my':loadMyLeaves,'conges-group':loadGroupLeaves,'conges-calendar':loadCalendar,'conges-balance':loadBalanceCards,'plan-my':loadMyPlanning,'plan-group':loadGroupPlanning,'plan-admin':()=>{loadAgentTemplates();loadAdminPlanning();loadAdminSwaps();},'plan-presence':loadPresence,'ptg-my':loadMyPointage,'ptg-admin':loadAdminPointage,'ptg-overtime':loadOvertime,'adm-validation':loadValidation,'adm-history':loadHistory,'adm-users':loadUsers,'adm-models':loadModels,'adm-plages':loadPlages,'adm-params':loadParams,'adm-holidays':loadHolidays,'adm-dashboard':()=>{loadDashboard();loadTeamRules();}};if(m[sub])m[sub]();}
+function loadSubTabData(sub){const m={'conges-new':loadBalance,'conges-my':loadMyLeaves,'conges-group':loadGroupLeaves,'conges-calendar':loadCalendar,'conges-balance':loadBalanceCards,'plan-my':loadMyPlanning,'plan-group':loadGroupPlanning,'plan-admin':()=>{loadAgentTemplates();loadAdminPlanning();loadAdminSwaps();},'plan-presence':loadPresence,'ptg-my':loadMyPointage,'ptg-admin':loadAdminPointage,'ptg-overtime':loadOvertime,'ptg-rapport':initRapport,'adm-validation':loadValidation,'adm-history':loadHistory,'adm-users':loadUsers,'adm-models':loadModels,'adm-plages':loadPlages,'adm-params':loadParams,'adm-holidays':loadHolidays,'adm-dashboard':()=>{loadDashboard();loadTeamRules();}};if(m[sub])m[sub]();}
 function startClock(){function t(){const n=new Date(),s=n.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});el('liveClock').textContent=s;if(el('ptgClock'))el('ptgClock').textContent=s;if(el('ptgDate'))el('ptgDate').textContent=n.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}t();setInterval(t,1000);}
 
 
@@ -955,7 +979,7 @@ function renderPlanGrid(data,monday,container,editable){
         html+=`<div class="shift-cell ${isBad?'bg-primary/15 text-primary border-primary/30':'bg-secondary/15 text-secondary border-secondary/30'}" title="${esc(lv.typeConge+' - '+lv.statut)}"><span class="material-symbols-outlined text-xs align-middle">beach_access</span> ${isBad?'Att.':'Congé'}</div>`;
       }
       else if(ds.length){ds.forEach(s=>{if(s.isOff==='Oui'||s.isOff===true)html+='<div class="shift-cell bg-outline-var/20 text-on-surface-var">OFF</div>';
-        else{const bg=s.couleurModele?`background:${s.couleurModele}25;color:${s.couleurModele};border-color:${s.couleurModele}40`:'';const ck=editable?`onclick="showShiftModal('${esc(s.idShift)}')"`:'';html+=`<div class="shift-cell mb-0.5" style="${bg}" ${ck}>${fmtTime(s.heureDebut)}-${fmtTime(s.heureFin)}</div>`;}});}
+        else{const bg=s.couleurModele?`background:${s.couleurModele}25;color:${s.couleurModele};border-color:${s.couleurModele}40`:'';const ck=editable?`onclick="showShiftModal('${esc(s.idShift)}')"`:'';const pTxt=s.pauseDebut&&s.pauseFin?`<div class="text-[9px] opacity-70">P ${fmtTime(s.pauseDebut)}-${fmtTime(s.pauseFin)}</div>`:'';html+=`<div class="shift-cell mb-0.5" style="${bg}" ${ck}>${fmtTime(s.heureDebut)}-${fmtTime(s.heureFin)}${pTxt}</div>`;}});}
       else{if(editable)html+=`<div class="shift-cell bg-outline-var/10 text-on-surface-var/40 cursor-pointer" onclick="showShiftModal(null,'${dt}','${esc(ag.userId)}')">+</div>`;else html+='<div class="text-on-surface-var/30">—</div>';}
       html+='</td>';});html+='</tr>';});
   html+='</tbody></table>';container.innerHTML=html;
@@ -1003,6 +1027,10 @@ async function showPlanWeekModal(){
         <div><label class="text-xs text-on-surface-var mb-1 block">Date fin</label><input id="pwDateFin" type="date" class="input-field" value="${isoDate(addDays(S.adminPlanWeek,6))}"></div>
       </div>
       <div><label class="text-xs text-on-surface-var mb-1 block">Jours (1=Lun,...,7=Dim)</label><input id="pwJours" class="input-field" value="1,2,3,4,5" placeholder="1,2,3,4,5"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs text-on-surface-var mb-1 block">Pause début</label><input id="pwPauseD" type="time" class="input-field" value="12:00"></div>
+        <div><label class="text-xs text-on-surface-var mb-1 block">Pause fin</label><input id="pwPauseF" type="time" class="input-field" value="13:00"></div>
+      </div>
       <div class="flex items-center gap-3"><input id="pwOverwrite" type="checkbox" class="accent-primary"><label class="text-sm">Écraser les shifts existants</label></div>
       <div class="glass-sm p-3 text-xs text-on-surface-var"><span class="material-symbols-outlined text-sm align-middle mr-1">info</span>Les agents en congé validé sont automatiquement ignorés.</div>
       <button onclick="doPlanWeek()" id="pwBtn" class="btn-primary w-full">Appliquer le planning</button>
@@ -1018,6 +1046,8 @@ async function doPlanWeek(){
       dateFin:el('pwDateFin').value,
       userIds:[...S.selectedAgents],
       joursSemaine:el('pwJours').value,
+      pauseDebut:el('pwPauseD').value,
+      pauseFin:el('pwPauseF').value,
       overwrite:el('pwOverwrite').checked
     });
     toast(`${r.created||0} créés, ${r.updated||0} maj, ${r.skipped||0} ignorés (congés/existants)`,'success');
@@ -1185,6 +1215,108 @@ async function loadOvertime(){const equipe=el('overtimeTeam')?.value,annee=parse
     el('overtimeBody').innerHTML=items.map(a=>`<tr class="table-row border-b border-outline-var/10"><td class="py-3 pr-4">${esc(a.nomAgent||a.userId)}</td><td class="py-3 pr-4">${esc(a.equipe||'')}</td><td class="py-3 pr-4">${esc(a.mois||'')}</td><td class="py-3 pr-4">${a.nbJours||0}</td><td class="py-3 pr-4 ${(a.totalHSup||0)>0?'text-primary font-medium':''}">${a.totalHSup||0}h</td><td class="py-3 pr-4 ${(a.totalRetardMin||0)>0?'text-error':''}">${a.totalRetardMin||0}</td><td class="py-3">${a.nbRetards||0}</td></tr>`).join('');
   }catch(e){toast(e.message,'error');}}
 
+/* =========== RAPPORT =========== */
+function initRapport(){
+  const now=new Date(),fom=new Date(now.getFullYear(),now.getMonth(),1);
+  if(!el('rptDateFrom').value)el('rptDateFrom').value=isoDate(fom);
+  if(!el('rptDateTo').value)el('rptDateTo').value=isoDate(now);
+}
+async function loadRapport(){
+  const equipe=el('rptTeam')?.value,df=el('rptDateFrom')?.value,dt=el('rptDateTo')?.value;
+  if(!df||!dt)return toast('Sélectionnez une période','error');
+  const f={};if(equipe)f.equipe=equipe;f.dateDebut=df;f.dateFin=dt;
+  try{
+    const r=await api('apiAdminListPointage',S.token,f);const items=r.items||[];
+    // Aggregate by agent
+    const byAgent={};
+    items.forEach(p=>{
+      const uid=p.userId||p.nomAgent;if(!byAgent[uid])byAgent[uid]={nom:p.nomAgent||uid,equipe:p.equipe||'',jours:0,joursPrevus:0,hTrav:0,hSup:0,retardMin:0,nbRetards:0};
+      const a=byAgent[uid];a.jours++;a.joursPrevus++;
+      a.hTrav+=parseFloat(p.dureeReelle)||0;a.hSup+=parseFloat(p.heuresSup)||0;
+      a.retardMin+=parseInt(p.retardMinutes)||0;if((parseInt(p.retardMinutes)||0)>0)a.nbRetards++;
+    });
+    const agents=Object.values(byAgent).sort((a,b)=>a.nom.localeCompare(b.nom));
+    // KPIs
+    const totJours=agents.reduce((a,x)=>a+x.jours,0),totHSup=agents.reduce((a,x)=>a+x.hSup,0),totRetard=agents.reduce((a,x)=>a+x.retardMin,0),totNbRet=agents.reduce((a,x)=>a+x.nbRetards,0);
+    el('rptKpis').innerHTML=[
+      {l:'Total jours',v:totJours,i:'event_available',c:'text-primary'},
+      {l:'H. Supp totales',v:totHSup.toFixed(1)+'h',i:'more_time',c:'text-tertiary'},
+      {l:'Retard total',v:totRetard+'min',i:'timer_off',c:'text-error'},
+      {l:'Nb retards',v:totNbRet,i:'warning',c:'text-primary'}
+    ].map(k=>`<div class="glass-sm p-4 kpi-card ${k.c}"><span class="material-symbols-outlined text-lg mb-1">${k.i}</span><div class="text-xl font-headline font-bold">${k.v}</div><div class="text-[11px] text-on-surface-var">${k.l}</div></div>`).join('');
+    if(!agents.length){el('rptBody').innerHTML='<tr><td colspan="9" class="py-8 text-center text-on-surface-var">Aucune donnée</td></tr>';return;}
+    S.lastRapport={agents,period:`${fmtDate(df)} — ${fmtDate(dt)}`,equipe:equipe||'Toutes',totJours,totHSup,totRetard,totNbRet};
+    el('rptBody').innerHTML=agents.map(a=>{
+      const pct=a.joursPrevus?Math.round(a.jours/a.joursPrevus*100):0;
+      return`<tr class="table-row border-b border-outline-var/10">
+        <td class="py-3 pr-4 font-medium">${esc(a.nom)}</td><td class="py-3 pr-4">${esc(a.equipe)}</td>
+        <td class="py-3 pr-4">${a.jours}</td><td class="py-3 pr-4">${a.joursPrevus}</td>
+        <td class="py-3 pr-4">${a.hTrav.toFixed(1)}h</td>
+        <td class="py-3 pr-4 ${a.hSup>0?'text-primary font-medium':''}">${a.hSup.toFixed(1)}h</td>
+        <td class="py-3 pr-4 ${a.retardMin>0?'text-error':''}">${a.retardMin}min</td>
+        <td class="py-3 pr-4">${a.nbRetards}</td>
+        <td class="py-3"><div class="flex items-center gap-2"><div class="progress-bar w-16"><div class="progress-fill" style="width:${pct}%"></div></div><span class="text-xs">${pct}%</span></div></td>
+      </tr>`;}).join('');
+  }catch(e){toast(e.message,'error');}
+}
+
+function exportRapportPDF(){
+  if(!S.lastRapport)return toast('Générez le rapport d\'abord','error');
+  const rpt=S.lastRapport;
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rapport Pointage</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;color:#1c1b1b;padding:40px;background:#fff}
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:20px;border-bottom:3px solid #d4af37}
+.logo{font-family:'Manrope',sans-serif;font-size:24px;font-weight:800;color:#1c1b1b}
+.logo span{color:#d4af37}
+.subtitle{font-size:12px;color:#5c5648;margin-top:4px}
+.meta{text-align:right;font-size:11px;color:#5c5648;line-height:1.8}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.kpi{background:#f8f6f2;border-radius:12px;padding:16px;text-align:center;border:1px solid #edeae4}
+.kpi .val{font-family:'Manrope',sans-serif;font-size:22px;font-weight:700;color:#1c1b1b}
+.kpi .label{font-size:10px;color:#8a8478;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px}
+.kpi.gold .val{color:#b8941e}
+.kpi.red .val{color:#ba1a1a}
+.kpi.green .val{color:#3d7a2e}
+table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:24px}
+thead th{background:#f8f6f2;padding:10px 8px;text-align:left;font-weight:600;color:#5c5648;border-bottom:2px solid #d4cfc4;font-size:10px;text-transform:uppercase;letter-spacing:0.3px}
+tbody td{padding:9px 8px;border-bottom:1px solid #edeae4}
+tbody tr:nth-child(even){background:#fafaf8}
+.text-gold{color:#b8941e;font-weight:600}
+.text-red{color:#ba1a1a;font-weight:600}
+.bar{display:inline-block;height:6px;border-radius:3px;background:#edeae4;width:60px;overflow:hidden;vertical-align:middle;margin-right:6px}
+.bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#d4af37,#b8941e)}
+.footer{margin-top:32px;padding-top:16px;border-top:2px solid #edeae4;display:flex;justify-content:space-between;font-size:10px;color:#8a8478}
+.watermark{position:fixed;bottom:20px;right:40px;font-size:9px;color:#d4cfc4}
+@media print{body{padding:20px}@page{margin:15mm;size:A4 landscape}}
+</style></head><body>
+<div class="header">
+  <div><div class="logo">Planning <span>&</span> Congés</div><div class="subtitle">Rapport de pointage — ${esc(rpt.equipe)}</div></div>
+  <div class="meta">Période: <strong>${esc(rpt.period)}</strong><br>Généré le: ${new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}<br>Heure: ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div>
+</div>
+<div class="kpis">
+  <div class="kpi"><div class="val">${rpt.totJours}</div><div class="label">Total jours pointés</div></div>
+  <div class="kpi gold"><div class="val">${rpt.totHSup.toFixed(1)}h</div><div class="label">Heures supplémentaires</div></div>
+  <div class="kpi red"><div class="val">${rpt.totRetard}min</div><div class="label">Retard cumulé</div></div>
+  <div class="kpi green"><div class="val">${rpt.totNbRet}</div><div class="label">Nombre de retards</div></div>
+</div>
+<table><thead><tr><th>Agent</th><th>Équipe</th><th>Jours pointés</th><th>Jours prévus</th><th>H. Travaillées</th><th>H. Supp</th><th>Retard total</th><th>Nb retards</th><th>Taux présence</th></tr></thead>
+<tbody>${rpt.agents.map(a=>{const pct=a.joursPrevus?Math.round(a.jours/a.joursPrevus*100):0;return`<tr>
+  <td><strong>${esc(a.nom)}</strong></td><td>${esc(a.equipe)}</td><td>${a.jours}</td><td>${a.joursPrevus}</td>
+  <td>${a.hTrav.toFixed(1)}h</td><td class="${a.hSup>0?'text-gold':''}">${a.hSup.toFixed(1)}h</td>
+  <td class="${a.retardMin>0?'text-red':''}">${a.retardMin}min</td><td>${a.nbRetards}</td>
+  <td><span class="bar"><span class="bar-fill" style="width:${pct}%"></span></span>${pct}%</td></tr>`;}).join('')}
+</tbody></table>
+<div class="footer"><div>Planning & Congés V2 — Rapport automatique</div><div>${rpt.agents.length} agents — ${esc(rpt.period)}</div></div>
+<div class="watermark">Document généré automatiquement</div>
+<script>setTimeout(()=>window.print(),500);<\/script>
+</body></html>`);
+  w.document.close();
+}
+
 /* =========== ADMIN =========== */
 async function loadValidation(){const equipe=el('validationTeamFilter')?.value;const f={scope:'all',statut:'En attente'};if(equipe)f.equipe=equipe;
   try{const r=await api('apiListLeaves',S.token,f);const items=r.items||[];
@@ -1248,7 +1380,10 @@ async function loadPlages(){try{const r=await api('apiAdminListPlagesHoraires',S
 async function deletePlage(id){if(!confirm('Supprimer ?'))return;try{await api('apiAdminDeletePlageHoraire',S.token,id);toast('Supprimée','success');loadPlages();}catch(e){toast(e.message,'error');}}
 
 /* Params - flat object */
+function normalizeParamValue(v){if(v==null)return'';const s=String(v);if(/^\w{3}\s\w{3}\s\d{2}\s\d{4}/.test(s)||/GMT[+-]/.test(s)){const d=new Date(s);if(!isNaN(d)){const n=parseFloat(d.getDate?((d.getTime()-new Date(d.getFullYear(),0,0).getTime())/86400000).toFixed(0):s);if(s.includes('accrual')||s.includes('Mensuel'))return String(d.getDate());return isoDate(d);}}if(typeof v==='object'&&v&&v.getTime){return isoDate(v);}return s;}
 async function loadParams(){try{const r=await api('apiAdminGetParams',S.token);const p=r.params||{};const labels={maxAbsentsParEquipe:'Max absents/équipe',delaiMinAvantConge:'Délai min avant congé (j)',typesCongesAutorises:'Types congés autorisés',vueEquipeAgents:'Vue équipe agents',accrualMensuelJours:'Crédit mensuel (jours)',modeleMailConge:'Modèle mail congé'};
+  // Normalize date values to readable format
+  Object.keys(p).forEach(k=>{p[k]=normalizeParamValue(p[k]);});
   el('paramsContainer').innerHTML=Object.keys(p).map(k=>`<div class="flex items-center gap-4"><label class="text-sm font-medium w-64 shrink-0">${esc(labels[k]||k)}</label>${k==='modeleMailConge'?`<textarea class="input-field param-input" data-key="${esc(k)}" rows="3">${esc(p[k]||'')}</textarea>`:`<input class="input-field param-input" data-key="${esc(k)}" value="${esc(p[k]||'')}">`}</div>`).join('');}catch(e){toast(e.message,'error');}}
 async function saveParams(){const p={};document.querySelectorAll('.param-input').forEach(i=>p[i.dataset.key]=i.value);try{await api('apiAdminSaveParams',S.token,p);toast('Enregistré','success');}catch(e){toast(e.message,'error');}}
 
