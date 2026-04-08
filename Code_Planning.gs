@@ -952,6 +952,9 @@ function _bulkApplyModel_(session, payload) {
   const joursSemaine = _normalizeDaysList_(payload.joursSemaine || '1,2,3,4,5').split(',').map(Number);
   const overwrite = !!payload.overwrite;
 
+  const customPauseDebut = normTrim_(payload.pauseDebut || '');
+  const customPauseFin = normTrim_(payload.pauseFin || '');
+
   if (!idModele) throw new Error('Modèle de shift requis.');
   if (!dateDebut || !dateFin) throw new Error('Dates requises.');
 
@@ -995,10 +998,10 @@ function _bulkApplyModel_(session, payload) {
         const row = sh.getRange(existing[key], 1, 1, headers.length).getValues()[0];
         row[h.heureDebut] = modele.heureDebut;
         row[h.heureFin] = modele.heureFin;
-        if (h.pauseDebut !== undefined) row[h.pauseDebut] = '';
-        if (h.pauseFin !== undefined) row[h.pauseFin] = '';
+        if (h.pauseDebut !== undefined) row[h.pauseDebut] = customPauseDebut;
+        if (h.pauseFin !== undefined) row[h.pauseFin] = customPauseFin;
         if (h.isOff !== undefined) row[h.isOff] = 'non';
-        if (h.dureePrevue !== undefined) row[h.dureePrevue] = _calcShiftNetDuration_(modele.heureDebut, modele.heureFin, '', '');
+        if (h.dureePrevue !== undefined) row[h.dureePrevue] = _calcShiftNetDuration_(modele.heureDebut, modele.heureFin, customPauseDebut, customPauseFin);
         row[h.nomModele] = modele.nom;
         row[h.couleurModele] = modele.couleur || '#4ea1ff';
         row[h.statut] = 'Planifié';
@@ -1014,10 +1017,10 @@ function _bulkApplyModel_(session, payload) {
           date,
           heureDebut: modele.heureDebut,
           heureFin: modele.heureFin,
-          pauseDebut: '',
-          pauseFin: '',
+          pauseDebut: customPauseDebut,
+          pauseFin: customPauseFin,
           isOff: 'non',
-          dureePrevue: _calcShiftNetDuration_(modele.heureDebut, modele.heureFin, '', ''),
+          dureePrevue: _calcShiftNetDuration_(modele.heureDebut, modele.heureFin, customPauseDebut, customPauseFin),
           nomModele: modele.nom,
           couleurModele: modele.couleur || '#4ea1ff',
           statut: 'Planifié',
